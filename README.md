@@ -38,6 +38,9 @@ npm run verify:community
 **Never pushed** (local only, see `.gitignore`): `docs/`, `.cursor/`, `AGENTS.md`, `.env`, dev `*.cjs` scripts, build artifacts.
 
 ```bash
+# First time (after gh auth login):
+npm run setup:private-remote
+
 npm run check:private-push    # before git push origin
 npm run push:private          # guard + push to private origin
 

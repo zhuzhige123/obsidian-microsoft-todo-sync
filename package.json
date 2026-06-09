@@ -17,7 +17,8 @@
     "verify:community": "npm run lint:obsidian && npm test && npm run build",
     "check:private-push": "node scripts/private-push-guard.mjs",
     "push:private": "node scripts/private-push-guard.mjs && git push origin main",
-    "sync:obsidian-community": "node scripts/sync-obsidian-community.mjs"
+    "sync:obsidian-community": "node scripts/sync-obsidian-community.mjs",
+    "setup:private-remote": "node scripts/setup-private-remote.mjs"
   },
   "keywords": [
     "obsidian",
