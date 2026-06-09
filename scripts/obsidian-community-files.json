@@ -1,0 +1,25 @@
+{
+  "description": "Whitelist for Obsidian community review public repo (npm run sync:obsidian-community).",
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    "manifest.json",
+    "versions.json",
+    "LICENSE",
+    "README.md",
+    "styles.css",
+    "package.json",
+    "package-lock.json",
+    "tsconfig.json",
+    "vite.config.ts",
+    "svelte.config.js",
+    "vitest.config.ts",
+    "eslint.obsidian.config.mjs",
+    "scripts/postbuild.mjs",
+    ".gitignore"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/test/**"
+  ]
+}

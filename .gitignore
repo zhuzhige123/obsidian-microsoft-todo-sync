@@ -1,0 +1,18 @@
+node_modules/
+main.js
+main.js.map
+styles.bundle.css
+.desktop-hot-reload/
+.dev-watch.lock.json
+*.cjs
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+
+# --- Local-only (never push to any remote) ---
+docs/
+.cursor/
+AGENTS.md
+.community-export/
