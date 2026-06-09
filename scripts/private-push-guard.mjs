@@ -3,7 +3,7 @@
  * Pre-push guard for the private GitHub remote.
  * Blocks local-only dev docs and Obsidian community export paths.
  */
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,13 +43,17 @@ function listStagedAndCommittedAhead(remoteRef) {
     const remote = remoteRef.split("/")[0];
     try {
       execSync(`git fetch ${remote}`, { cwd: root, stdio: "ignore" });
-      if (execSync(`git rev-parse --verify ${remoteRef}`, { cwd: root, encoding: "utf8" }).trim()) {
+      const hasRemoteBranch =
+        spawnSync("git", ["rev-parse", "--verify", remoteRef], { cwd: root }).status === 0;
+      if (hasRemoteBranch) {
         for (const line of execSync(`git diff --name-only ${remoteRef}..HEAD`, {
           cwd: root,
           encoding: "utf8",
         }).split("\n")) {
           if (line.trim()) files.add(line.trim().replace(/\\/g, "/"));
         }
+      } else {
+        throw new Error("no remote branch");
       }
     } catch {
       for (const line of execSync("git ls-tree -r --name-only HEAD", {
