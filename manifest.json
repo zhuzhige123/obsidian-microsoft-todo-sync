@@ -1,7 +1,7 @@
 {
   "id": "obsidian-microsoft-todo-sync",
   "name": "Microsoft To Do Sync",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "minAppVersion": "1.11.4",
   "description": "Sync tagged Obsidian tasks with a dedicated Microsoft To Do list: notes, subtasks, reminders, and Obsidian deep links.",
   "author": "Rabbit (zhuzhige)",
