@@ -4,7 +4,7 @@
  * Blocks local-only dev docs and Obsidian community export paths.
  */
 import { execSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,17 +40,24 @@ function listStagedAndCommittedAhead(remoteRef) {
     // no staged
   }
   if (remoteRef) {
+    const remote = remoteRef.split("/")[0];
     try {
-      execSync(`git fetch ${remoteRef.split("/")[0]}`, { cwd: root, stdio: "ignore" });
-      const range = `${remoteRef}..HEAD`;
-      for (const line of execSync(`git diff --name-only ${range}`, {
+      execSync(`git fetch ${remote}`, { cwd: root, stdio: "ignore" });
+      if (execSync(`git rev-parse --verify ${remoteRef}`, { cwd: root, encoding: "utf8" }).trim()) {
+        for (const line of execSync(`git diff --name-only ${remoteRef}..HEAD`, {
+          cwd: root,
+          encoding: "utf8",
+        }).split("\n")) {
+          if (line.trim()) files.add(line.trim().replace(/\\/g, "/"));
+        }
+      }
+    } catch {
+      for (const line of execSync("git ls-tree -r --name-only HEAD", {
         cwd: root,
         encoding: "utf8",
       }).split("\n")) {
         if (line.trim()) files.add(line.trim().replace(/\\/g, "/"));
       }
-    } catch {
-      // first push or missing remote
     }
   }
   return [...files];
@@ -70,24 +77,26 @@ function isBlocked(relPath) {
   return null;
 }
 
-function scanSecrets() {
-  try {
-    const out = execSync('git grep -l "BEGIN PRIVATE KEY" HEAD', {
-      cwd: root,
-      encoding: "utf8",
-    }).trim();
-    if (out) return out.split("\n");
-  } catch {
-    // no matches
+const PEM_PRIVATE_KEY = /-----BEGIN (?:RSA )?PRIVATE KEY-----/;
+
+function scanSecrets(files) {
+  const hits = [];
+  for (const rel of files) {
+    const abs = path.join(root, rel);
+    try {
+      if (PEM_PRIVATE_KEY.test(readFileSync(abs, "utf8"))) hits.push(rel);
+    } catch {
+      // missing or binary
+    }
   }
-  return [];
+  return hits;
 }
 
 export function runPrivatePushGuard(options = {}) {
   const remoteRef = options.remoteRef ?? "origin/main";
   const files = listStagedAndCommittedAhead(remoteRef);
   const blocked = files.map((f) => isBlocked(f)).filter(Boolean);
-  const secrets = scanSecrets();
+  const secrets = scanSecrets(files);
 
   if (blocked.length > 0) {
     console.error("\n[private-push-guard] 以下路径禁止推送到私密仓：\n");
