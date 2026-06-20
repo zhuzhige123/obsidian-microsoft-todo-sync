@@ -44,9 +44,10 @@ describe("file-task-scanner", () => {
     const scope = {
       syncTag: "msd",
       todoListName: "Obsidian Sync",
+      defaultInboundVaultPath: "Microsoft To Do/Inbox.md",
       listRoutes: [
-        { tagPath: "基础任务", listName: "MSD 基础" },
-        { tagPath: "学习任务", listName: "MSD 学习" },
+        { tagPath: "基础任务", listName: "MSD 基础", vaultPath: "Care/Basic.md" },
+        { tagPath: "学习任务", listName: "MSD 学习", vaultPath: "Study/Tasks.md" },
       ],
     };
     const tasks = scanFileForSyncTasks("note.md", lines, [], scope);

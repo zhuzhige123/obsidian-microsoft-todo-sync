@@ -66,7 +66,7 @@ function compactPayload(payload: Record<string, unknown>): Record<string, unknow
 export function buildGraphTaskPayload(
   task: ParsedSyncTask,
   bodyContent: string,
-  options: { scheduledMapsToStart: boolean }
+  options: { scheduledMapsToStart: boolean; allowEmptyBody?: boolean }
 ): Record<string, unknown> {
   const reminderIso = reminderIsoFromInline(
     {
@@ -91,6 +91,11 @@ export function buildGraphTaskPayload(
       contentType: "text",
       content: bodyContent,
     };
+  } else if (options.allowEmptyBody) {
+    payload.body = {
+      contentType: "text",
+      content: "",
+    };
   }
 
   const dueDateTime = toGraphDueDate(due);
@@ -111,6 +116,18 @@ export function buildGraphTaskPayload(
   return compactPayload(payload);
 }
 
+function priorityFromGraphImportance(
+  importance?: string
+): ParsedSyncTask["priority"] | undefined {
+  if (importance === "high") {
+    return "high";
+  }
+  if (importance === "low") {
+    return "low";
+  }
+  return undefined;
+}
+
 export function graphTaskToObsidianPatch(
   graphTask: GraphTodoTask,
   options: { scheduledMapsToStart: boolean }
@@ -122,13 +139,15 @@ export function graphTaskToObsidianPatch(
   reminderDate?: string;
   reminderTime?: string;
   scheduledDate?: string;
+  startDate?: string;
+  priority?: ParsedSyncTask["priority"];
   doneDate?: string;
 } {
   const checkbox = checkboxFromGraphStatus(graphTask.status);
   const dueDate = graphTask.dueDateTime?.dateTime?.slice(0, 10);
-  const scheduledDate = options.scheduledMapsToStart
-    ? graphTask.startDateTime?.dateTime?.slice(0, 10)
-    : undefined;
+  const startSlice = graphTask.startDateTime?.dateTime?.slice(0, 10);
+  const scheduledDate = options.scheduledMapsToStart ? startSlice : undefined;
+  const startDate = options.scheduledMapsToStart ? undefined : startSlice;
   const reminderSource =
     graphTask.isReminderOn && graphTask.reminderDateTime?.dateTime
       ? graphTask.reminderDateTime.dateTime
@@ -146,6 +165,8 @@ export function graphTaskToObsidianPatch(
     reminderDate: inline.reminderDate,
     reminderTime: inline.reminderTime,
     scheduledDate,
+    startDate,
+    priority: priorityFromGraphImportance(graphTask.importance),
     doneDate,
   };
 }

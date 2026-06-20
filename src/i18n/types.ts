@@ -51,7 +51,12 @@ export interface MtdStrings {
     listRoutesDesc: string;
     listRoutesColTag: string;
     listRoutesColList: string;
+    listRoutesColVault: string;
     listRoutesColActions: string;
+    defaultInboundVaultPathName: string;
+    defaultInboundVaultPathDesc: string;
+    inboundRouteName: string;
+    inboundRouteDesc: string;
     listRoutesNew: string;
     listRoutesSave: string;
     listRoutesDelete: string;
@@ -62,12 +67,19 @@ export interface MtdStrings {
     listRoutesErrorList: string;
     listRoutesErrorDuplicate: string;
     listRoutesErrorNamespace: string;
+    listRoutesErrorVault: string;
+    listRoutesErrorListConflict: string;
+    listRoutesVaultPlaceholder: string;
     intervalName: string;
     intervalDesc: string;
     backlinkName: string;
     backlinkDesc: string;
     linkedResourceName: string;
     linkedResourceDesc: string;
+    cleanupRemoteOnUnlinkName: string;
+    cleanupRemoteOnUnlinkDesc: string;
+    stripInboundRouteHeaderName: string;
+    stripInboundRouteHeaderDesc: string;
     deletePolicyName: string;
     deletePolicyDesc: string;
     deletePolicyDelete: string;
@@ -86,6 +98,7 @@ export interface MtdStrings {
     autoSyncIdleDesc: string;
     autoSyncTagDelayName: string;
     autoSyncTagDelayDesc: string;
+    backlinkTodoHeader: string;
   };
   account: {
     title: string;
@@ -144,16 +157,44 @@ export interface MtdStrings {
     taskNoteNotFound: string;
     taskLineNotFound: string;
     locatedTask: string;
+    inboundFailed: string;
+    noActiveEditor: string;
+    noTaskAtLine: string;
+    syncedCurrentTask: string;
+    invalidReminder: string;
+    deltaPullFailed: string;
   };
   commands: {
     syncVault: string;
     syncFile: string;
     pullDelta: string;
+    syncTask: string;
+    addToday: string;
+    setReminder: string;
+    openInTodo: string;
+    copyBacklink: string;
+    setReminderPromptTitle: string;
+    setReminderPromptDesc: string;
+    setReminderInputName: string;
+    setReminderPlaceholder: string;
+    setReminderConfirm: string;
   };
   chips: {
     sync: string;
     task: string;
     step: string;
+    pushNow: string;
+    pullNow: string;
+    openInTodo: string;
+    copyLink: string;
+    unlink: string;
+    linkCopied: string;
+    copyLinkFailed: string;
+    openTodoUnavailable: string;
+    pushed: string;
+    pulled: string;
+    unlinked: string;
+    actionFailed: string;
   };
   badges: {
     myDay: string;

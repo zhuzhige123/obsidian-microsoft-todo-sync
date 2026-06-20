@@ -8,10 +8,17 @@ export interface RouteRow {
   id: string;
   displayTag: string;
   listName: string;
+  vaultPath: string;
   saved: boolean;
 }
 
-export type RouteValidationError = "tag" | "list" | "duplicate" | "namespace";
+export type RouteValidationError =
+  | "tag"
+  | "list"
+  | "vault"
+  | "duplicate"
+  | "namespace"
+  | "list_conflict";
 
 export function routesSyncKey(routes: ListRouteEntry[], tag: string): string {
   return JSON.stringify({ tag, routes });
@@ -22,6 +29,7 @@ export function buildSavedRows(nextRoutes: ListRouteEntry[], tag: string): Route
     id: `saved-${index}-${route.tagPath}`,
     displayTag: formatRouteDisplayTag(tag, route.tagPath),
     listName: route.listName,
+    vaultPath: route.vaultPath,
     saved: true,
   }));
 }
@@ -37,7 +45,8 @@ export function defaultRouteDisplayTag(syncTag: string): string {
 
 export function entriesFromRows(rows: RouteRow[], syncTag: string): ListRouteEntry[] | null {
   const entries: ListRouteEntry[] = [];
-  const seen = new Set<string>();
+  const seenTags = new Set<string>();
+  const seenLists = new Map<string, string>();
 
   for (const row of rows) {
     if (!row.saved) {
@@ -50,17 +59,28 @@ export function entriesFromRows(rows: RouteRow[], syncTag: string): ListRouteEnt
     }
 
     const listName = row.listName.trim();
+    const vaultPath = row.vaultPath.trim();
     if (!listName) {
+      return null;
+    }
+    if (!vaultPath) {
       return null;
     }
 
     const dedupeKey = parsed.tagPath.toLowerCase();
-    if (seen.has(dedupeKey)) {
+    if (seenTags.has(dedupeKey)) {
       return null;
     }
-    seen.add(dedupeKey);
+    seenTags.add(dedupeKey);
 
-    entries.push({ tagPath: parsed.tagPath, listName });
+    const listKey = listName.toLowerCase();
+    const existingPath = seenLists.get(listKey);
+    if (existingPath && existingPath !== vaultPath) {
+      return null;
+    }
+    seenLists.set(listKey, vaultPath);
+
+    entries.push({ tagPath: parsed.tagPath, listName, vaultPath });
   }
 
   return entries;
@@ -81,16 +101,34 @@ export function validateRouteRow(
   if (!row.listName.trim()) {
     return "list";
   }
+  if (!row.vaultPath.trim()) {
+    return "vault";
+  }
 
-  const duplicate = rows.some((item) => {
+  const duplicateTag = rows.some((item) => {
     if (item.id === row.id || !item.saved) {
       return false;
     }
     const other = parseRouteDisplayInput(item.displayTag, syncTag);
     return !other.error && other.tagPath.toLowerCase() === parsed.tagPath.toLowerCase();
   });
-  if (duplicate) {
+  if (duplicateTag) {
     return "duplicate";
+  }
+
+  const listKey = row.listName.trim().toLowerCase();
+  const vaultPath = row.vaultPath.trim();
+  const listConflict = rows.some((item) => {
+    if (item.id === row.id || !item.saved) {
+      return false;
+    }
+    return (
+      item.listName.trim().toLowerCase() === listKey &&
+      item.vaultPath.trim() !== vaultPath
+    );
+  });
+  if (listConflict) {
+    return "list_conflict";
   }
 
   return null;
@@ -106,5 +144,6 @@ export function commitRouteRow(row: RouteRow, syncTag: string): RouteRow {
     saved: true,
     displayTag: formatRouteDisplayTag(syncTag, parsed.tagPath),
     listName: row.listName.trim(),
+    vaultPath: row.vaultPath.trim(),
   };
 }

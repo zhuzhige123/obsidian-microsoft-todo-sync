@@ -7,6 +7,9 @@ import { collectSubtasks, collectSubtasksFromLines } from "./subtask-parser";
 import { parseMtdComment } from "./mtd-comment";
 import type { ParsedSyncTask } from "../types/sync";
 
+export { collectMtdIdsInLines, findTaskLineByMtdId } from "./mtd-index";
+export { findTaskInVault } from "../vault/mtd-locator";
+
 function buildTaskFromLine(
   filePath: string,
   lines: string[],
@@ -68,17 +71,6 @@ export function fileContainsSyncTag(content: string, syncTag: string): boolean {
   return hasSyncTag(content, syncTag);
 }
 
-export function collectMtdIdsInLines(lines: string[]): Set<string> {
-  const ids = new Set<string>();
-  for (const line of lines) {
-    const mtd = parseMtdComment(line);
-    if (mtd.id) {
-      ids.add(mtd.id);
-    }
-  }
-  return ids;
-}
-
 function scanFromListItems(
   filePath: string,
   lines: string[],
@@ -130,7 +122,12 @@ export function scanFileForSyncTasks(
 ): ParsedSyncTask[] {
   const settings: SyncScopeSettings =
     typeof scope === "string"
-      ? { syncTag: scope, todoListName: "Obsidian Sync", listRoutes: [] }
+      ? {
+          syncTag: scope,
+          todoListName: "Obsidian Sync",
+          defaultInboundVaultPath: "Microsoft To Do/Inbox.md",
+          listRoutes: [],
+        }
       : scope;
   const byLine = new Map<number, ParsedSyncTask>();
   for (const task of scanFromListItems(filePath, lines, listItems, settings)) {
@@ -142,12 +139,3 @@ export function scanFileForSyncTasks(
   return [...byLine.values()].sort((a, b) => a.line - b.line);
 }
 
-export function findTaskLineByMtdId(lines: string[], mtdId: string): number {
-  for (let i = 0; i < lines.length; i++) {
-    const mtd = parseMtdComment(lines[i] ?? "");
-    if (mtd.id === mtdId) {
-      return i;
-    }
-  }
-  return -1;
-}

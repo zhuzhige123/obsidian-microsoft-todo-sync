@@ -1,4 +1,3 @@
-import { normalizePath, TFile, type Vault } from "obsidian";
 import { serializeMtdComment, stripMtdComment, upsertMtdComment } from "../parse/mtd-comment";
 import { formatDueSegment, formatReminderSegment } from "../parse/task-datetime";
 import { buildTaskLine, parseTaskLine } from "../parse/task-line-parser";
@@ -7,54 +6,11 @@ import { stripCalloutPrefix, withCalloutPrefix } from "../parse/task-callout";
 import { computeTaskBlockEnd } from "../parse/task-block";
 import { sanitizeTaskDisplayText } from "../parse/task-text";
 import type { ParsedSubtask, ParsedSyncTask } from "../types/sync";
-
-export async function updateTaskLineInFile(
-  vault: Vault,
-  filePath: string,
-  line: number,
-  newLine: string
-): Promise<void> {
-  const file = vault.getAbstractFileByPath(normalizePath(filePath));
-  if (!(file instanceof TFile)) {
-    return;
-  }
-  const tfile = file;
-  const content = await vault.read(tfile);
-  const lines = content.split("\n");
-  if (line < 0 || line >= lines.length) {
-    return;
-  }
-  lines[line] = newLine;
-  await vault.modify(tfile, lines.join("\n"));
-}
+import { formatTaskLineBody, taskLineBodyFromParsedTask } from "./task-line-body";
 
 export function rebuildTaskLine(task: ParsedSyncTask, syncTag: string): string {
   const indent = " ".repeat(task.taskIndent);
-  const defaultTag = syncTag.startsWith("#") ? syncTag : `#${syncTag}`;
-  const existingTags =
-    stripMtdComment(task.rawLine).match(/#[\w/-]+/g) ?? [];
-  const tags = existingTags.length > 0 ? existingTags : [defaultTag];
-  let body = task.title;
-  for (const tag of tags) {
-    if (!body.includes(tag)) {
-      body = `${body} ${tag}`.trim();
-    }
-  }
-  const dueSegment = formatDueSegment(task.dueDate, task.dueTime);
-  if (dueSegment) body += ` ${dueSegment}`;
-  const reminderSegment = formatReminderSegment(
-    task.reminderDate,
-    task.reminderTime,
-    task.dueDate
-  );
-  if (reminderSegment) body += ` ${reminderSegment}`;
-  if (task.scheduledDate) body += ` ⏳ ${task.scheduledDate}`;
-  if (task.startDate) body += ` 🛫 ${task.startDate}`;
-  if (task.priority === "high") body += " ⏫";
-  if (task.priority === "low") body += " 🔽";
-  if (task.checkbox === "x" || task.checkbox === "X") {
-    body += task.doneDate ? ` ✅ ${task.doneDate}` : "";
-  }
+  const body = formatTaskLineBody(taskLineBodyFromParsedTask(task, syncTag));
   const mtdSerialized = serializeMtdComment(task.mtd);
   const line = buildTaskLine({
     indent,
@@ -149,19 +105,4 @@ export function rebuildFileSection(
 export function removeTaskBlockFromLines(lines: string[], task: ParsedSyncTask): string[] {
   const endIndex = computeTaskBlockEnd(lines, task.line, task.taskIndent);
   return [...lines.slice(0, task.line), ...lines.slice(endIndex)];
-}
-
-export async function deleteTaskBlock(
-  vault: Vault,
-  filePath: string,
-  task: ParsedSyncTask
-): Promise<void> {
-  const file = vault.getAbstractFileByPath(normalizePath(filePath));
-  if (!(file instanceof TFile)) {
-    return;
-  }
-  const content = await vault.read(file);
-  const lines = content.split("\n");
-  const next = removeTaskBlockFromLines(lines, task);
-  await vault.modify(file, next.join("\n"));
 }

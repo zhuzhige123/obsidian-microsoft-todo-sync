@@ -43,6 +43,8 @@ export interface SyncIndexEntry {
   linkedResourceId?: string;
   obsidianModified: number;
   graphModified?: string;
+  /** ISO timestamp of last synced To Do note body (`bodyLastModifiedDateTime`). */
+  graphBodyModified?: string;
   /** Fingerprint of last successfully synced task content. */
   taskSnapshot?: string;
 }
@@ -71,6 +73,8 @@ export interface LegacyAuthState {
 }
 
 export interface MtdPluginData {
+  /** Schema version for incremental migrations on load. */
+  settingsVersion?: number;
   settings: import("../settings/types").MtdPluginSettings;
   index: Record<string, SyncIndexEntry>;
   syncMeta: SyncMeta;

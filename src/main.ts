@@ -1,8 +1,12 @@
 import { Notice, Plugin, TFile } from "obsidian";
+import { registerTaskCommands } from "./commands/register-task-commands";
 import { MsAuthService, type AuthChangeEvent } from "./auth/ms-auth-service";
 import { AUTH_PROTOCOL_NAME } from "./config/constants";
 import { GraphClient } from "./graph/graph-client";
 import { formatString, getStrings } from "./i18n";
+import { getVaultUriIdentifier, parseTaskLinkParams } from "./navigation/obsidian-uri";
+import { SyncIndex } from "./sync/sync-index";
+import { registerTaskLocateEditorExtension } from "./navigation/task-locate-editor-extension";
 import { TaskLocateNavigation } from "./navigation/task-locate-navigation";
 import { DEFAULT_SETTINGS, normalizeSettings } from "./settings/defaults";
 import { MtdSettingsTab } from "./settings/MtdSettingsTab";
@@ -13,9 +17,8 @@ import {
   createEmptyPluginData,
   mergePluginData,
   readLegacyAuthState,
-  SyncEngine,
-  type SyncEngineHost,
-} from "./sync/sync-engine";
+} from "./sync/plugin-data";
+import { SyncEngine, type SyncEngineHost } from "./sync/sync-engine";
 import type { MtdPluginData } from "./types/sync";
 import { registerMtdCommentEditorExtension } from "./ui/mtd-editor-extension";
 import { registerTaskPostProcessor } from "./ui/task-post-processor";
@@ -56,7 +59,6 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
     }
 
     this.graph = new GraphClient(this.auth);
-    this.taskNavigation = new TaskLocateNavigation(this.app, () => this.strings());
 
     const host: SyncEngineHost = {
       app: this.app,
@@ -71,6 +73,14 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
       },
     };
     this.syncEngine = new SyncEngine(host);
+    this.taskNavigation = new TaskLocateNavigation(
+      this.app,
+      () => this.strings(),
+      async () => SyncIndex.fromRecord(this.pluginData.index),
+      async (entry) => {
+        await this.syncEngine.repairIndexEntry(entry);
+      }
+    );
 
     this.autoSync = new AutoSyncScheduler({
       app: this.app,
@@ -87,6 +97,7 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
     this.addSettingTab(new MtdSettingsTab(this.app, this));
     registerTaskPostProcessor(this);
     registerMtdCommentEditorExtension(this);
+    registerTaskLocateEditorExtension(this);
 
     this.registerObsidianProtocolHandler("mtd-sync", async (params) => {
       await this.handleDeepLink(params);
@@ -130,6 +141,8 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
       },
     });
 
+    registerTaskCommands(this);
+
     if (this.auth.isLoggedIn) {
       const startupPullId = globalThis.setTimeout(() => {
         void this.syncEngine.pullDelta({ silent: true });
@@ -143,6 +156,7 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
   onunload(): void {
     this.deltaPoller.stop();
     this.autoSync?.detach();
+    this.taskNavigation?.dispose();
   }
 
   startDeltaPoller(): void {
@@ -181,6 +195,22 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
     await this.saveAllData(this.pluginData);
   }
 
+  getSyncIndex(): SyncIndex {
+    return SyncIndex.fromRecord(this.pluginData.index);
+  }
+
+  async loadSyncIndex(): Promise<SyncIndex> {
+    const live = this.syncEngine.getLiveIndex();
+    if (live) {
+      return SyncIndex.fromRecord(live.toRecord());
+    }
+    const raw: unknown = await this.loadData();
+    if (raw && typeof raw === "object" && "index" in raw) {
+      return SyncIndex.fromRecord((raw as MtdPluginData).index);
+    }
+    return this.getSyncIndex();
+  }
+
   private async saveAllData(data: MtdPluginData): Promise<void> {
     this.pluginData = data;
     this.settings = data.settings;
@@ -214,6 +244,11 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
   private markPluginWrite(path: string): void {
     const until = Date.now() + 5000;
     this.pluginWrittenPaths.set(path, until);
+  }
+
+  /** Mark a vault path as plugin-written to suppress auto-sync echo. */
+  markVaultWrite(path: string): void {
+    this.markPluginWrite(path);
   }
 
   private isPluginWrite(path: string): boolean {
@@ -303,21 +338,34 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
   }
 
   private async handleDeepLink(params: Record<string, string>): Promise<void> {
-    const vault = params.vault?.trim();
-    const file = params.file?.trim();
-    const task = params.task?.trim();
-    const lineHint = params.line ? Number.parseInt(params.line, 10) : undefined;
+    try {
+      const parsed = parseTaskLinkParams(params);
+      if (!parsed) {
+        new Notice(this.strings().notices.invalidTaskLink);
+        return;
+      }
 
-    if (!vault || !file || !task) {
-      new Notice(this.strings().notices.invalidTaskLink);
-      return;
+      if (parsed.filePath) {
+        await this.taskNavigation.navigateToTask({
+          vaultParam: parsed.vaultParam ?? getVaultUriIdentifier(this.app),
+          filePath: parsed.filePath,
+          mtdId: parsed.mtdId,
+          lineHint: parsed.lineHint,
+        });
+        return;
+      }
+
+      await this.taskNavigation.resolveByMtdId({
+        mtdId: parsed.mtdId,
+        vaultParam: parsed.vaultParam,
+        lineHint: parsed.lineHint,
+      });
+    } catch (error) {
+      globalThis.console.error("Microsoft To Do sync: deep link failed", error);
+      const message = error instanceof Error ? error.message : String(error);
+      new Notice(
+        formatString(this.strings().notices.syncFailed, { message: message.slice(0, 180) })
+      );
     }
-
-    await this.taskNavigation.navigateToTask({
-      vaultName: decodeURIComponent(vault),
-      filePath: decodeURIComponent(file),
-      mtdId: task,
-      lineHint: Number.isFinite(lineHint) ? lineHint : undefined,
-    });
   }
 }

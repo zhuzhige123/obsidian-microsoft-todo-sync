@@ -63,6 +63,25 @@ export function mountGeneralSettings(
       );
     });
 
+  new Setting(hosts.scope)
+    .setName(strings.sync.defaultInboundVaultPathName)
+    .setDesc(strings.sync.defaultInboundVaultPathDesc)
+    .addText((text) => {
+      wireTextSetting(
+        text,
+        () => plugin.settings.defaultInboundVaultPath,
+        (value) => {
+          plugin.settings.defaultInboundVaultPath =
+            value.trim() || "Microsoft To Do/Inbox.md";
+        },
+        save
+      );
+    });
+
+  new Setting(hosts.scope)
+    .setName(strings.sync.inboundRouteName)
+    .setDesc(strings.sync.inboundRouteDesc);
+
   new Setting(hosts.autoSync)
     .setName(strings.sync.autoSyncModeName)
     .setDesc(strings.sync.autoSyncModeDesc)
@@ -171,6 +190,28 @@ export function mountGeneralSettings(
       toggle.setValue(plugin.settings.createLinkedResource);
       toggle.onChange(async (value) => {
         plugin.settings.createLinkedResource = value;
+        await save();
+      });
+    });
+
+  new Setting(hosts.links)
+    .setName(strings.sync.stripInboundRouteHeaderName)
+    .setDesc(strings.sync.stripInboundRouteHeaderDesc)
+    .addToggle((toggle) => {
+      toggle.setValue(plugin.settings.stripInboundRouteHeader);
+      toggle.onChange(async (value) => {
+        plugin.settings.stripInboundRouteHeader = value;
+        await save();
+      });
+    });
+
+  new Setting(hosts.links)
+    .setName(strings.sync.cleanupRemoteOnUnlinkName)
+    .setDesc(strings.sync.cleanupRemoteOnUnlinkDesc)
+    .addToggle((toggle) => {
+      toggle.setValue(plugin.settings.cleanupRemoteOnUnlink);
+      toggle.onChange(async (value) => {
+        plugin.settings.cleanupRemoteOnUnlink = value;
         await save();
       });
     });

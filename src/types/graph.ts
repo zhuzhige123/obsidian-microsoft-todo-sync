@@ -10,6 +10,8 @@ export interface GraphTodoTask {
   isReminderOn?: boolean;
   completedDateTime?: { dateTime: string; timeZone: string };
   lastModifiedDateTime?: string;
+  bodyLastModifiedDateTime?: string;
+  checklistItems?: GraphChecklistItem[];
   "@removed"?: { reason: string };
 }
 

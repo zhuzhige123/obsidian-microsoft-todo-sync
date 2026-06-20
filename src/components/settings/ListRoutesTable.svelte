@@ -53,6 +53,7 @@
         id: newRouteRowId(),
         displayTag: defaultRouteDisplayTag(syncTag),
         listName: "",
+        vaultPath: "",
         saved: false,
       },
     ];
@@ -61,6 +62,12 @@
   function validationMessage(kind: RouteValidationError): string {
     if (kind === "list") {
       return strings.listRoutesErrorList;
+    }
+    if (kind === "vault") {
+      return strings.listRoutesErrorVault;
+    }
+    if (kind === "list_conflict") {
+      return strings.listRoutesErrorListConflict;
     }
     if (kind === "duplicate") {
       return strings.listRoutesErrorDuplicate;
@@ -158,6 +165,7 @@
       <div class="mtd-routes-grid-row mtd-routes-grid-head" role="row">
         <div class="mtd-routes-grid-cell" role="columnheader">{strings.listRoutesColTag}</div>
         <div class="mtd-routes-grid-cell" role="columnheader">{strings.listRoutesColList}</div>
+        <div class="mtd-routes-grid-cell" role="columnheader">{strings.listRoutesColVault}</div>
         <div class="mtd-routes-grid-cell mtd-routes-grid-cell--actions" role="columnheader">
           {strings.listRoutesColActions}
         </div>
@@ -190,6 +198,16 @@
                 type="text"
                 bind:value={row.listName}
                 placeholder={strings.listRoutesListPlaceholder}
+                oninput={() => markDirty(row.id)}
+              />
+            </div>
+            <div class="mtd-routes-grid-cell" role="cell">
+              <input
+                class="input mtd-routes-grid-input"
+                type="text"
+                bind:value={row.vaultPath}
+                placeholder={strings.listRoutesVaultPlaceholder}
+                spellcheck="false"
                 oninput={() => markDirty(row.id)}
               />
             </div>

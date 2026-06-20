@@ -16,6 +16,12 @@
     "vitest.config.ts",
     "eslint.obsidian.config.mjs",
     "scripts/postbuild.mjs",
+    "scripts/obsidian-lint-targets.cjs",
+    "scripts/check-forbidden-eslint-disables.cjs",
+    "scripts/run-obsidian-community-lint.cjs",
+    "scripts/lint-community-audit.cjs",
+    "scripts/lint-obsidian-strict.cjs",
+    ".github/workflows/ci.yml",
     ".gitignore"
   ],
   "exclude": [

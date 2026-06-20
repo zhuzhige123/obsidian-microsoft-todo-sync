@@ -11,12 +11,16 @@ import {
 describe("list-route-rows", () => {
   it("builds saved rows with formatted tags", () => {
     expect(
-      buildSavedRows([{ tagPath: "study", listName: "Study" }], "mtd-sync")
+      buildSavedRows(
+        [{ tagPath: "study", listName: "Study", vaultPath: "Study/Tasks.md" }],
+        "mtd-sync"
+      )
     ).toEqual([
       {
         id: "saved-0-study",
         displayTag: "#mtd-sync/study",
         listName: "Study",
+        vaultPath: "Study/Tasks.md",
         saved: true,
       },
     ]);
@@ -27,6 +31,7 @@ describe("list-route-rows", () => {
       id: "draft-1",
       displayTag: "#mtd-sync",
       listName: "Study",
+      vaultPath: "Study/Tasks.md",
       saved: false,
     };
     expect(validateRouteRow(row, [row], "mtd-sync")).toBe("namespace");
@@ -37,12 +42,14 @@ describe("list-route-rows", () => {
       id: "draft-1",
       displayTag: "#mtd-sync/study",
       listName: " Study ",
+      vaultPath: " Study/Tasks.md ",
       saved: false,
     };
     expect(commitRouteRow(row, "mtd-sync")).toEqual({
       id: "draft-1",
       displayTag: "#mtd-sync/study",
       listName: "Study",
+      vaultPath: "Study/Tasks.md",
       saved: true,
     });
   });
@@ -53,18 +60,20 @@ describe("list-route-rows", () => {
         id: "saved-1",
         displayTag: "#mtd-sync/study",
         listName: "Study",
+        vaultPath: "Study/Tasks.md",
         saved: true,
       },
       {
         id: "saved-2",
         displayTag: "#mtd-sync/work",
         listName: "Work",
+        vaultPath: "Work/Tasks.md",
         saved: true,
       },
     ];
     expect(entriesFromRows(rows, "mtd-sync")).toEqual([
-      { tagPath: "study", listName: "Study" },
-      { tagPath: "work", listName: "Work" },
+      { tagPath: "study", listName: "Study", vaultPath: "Study/Tasks.md" },
+      { tagPath: "work", listName: "Work", vaultPath: "Work/Tasks.md" },
     ]);
 
     const duplicateRows: RouteRow[] = [
@@ -73,10 +82,34 @@ describe("list-route-rows", () => {
         id: "saved-3",
         displayTag: "#mtd-sync/STUDY",
         listName: "Duplicate",
+        vaultPath: "Other.md",
         saved: true,
       },
     ];
     expect(entriesFromRows(duplicateRows, "mtd-sync")).toBeNull();
+  });
+
+  it("rejects the same list mapped to different files", () => {
+    const rows: RouteRow[] = [
+      {
+        id: "saved-1",
+        displayTag: "#mtd-sync/study",
+        listName: "Study",
+        vaultPath: "Study/A.md",
+        saved: true,
+      },
+      {
+        id: "saved-2",
+        displayTag: "#mtd-sync/work",
+        listName: "Study",
+        vaultPath: "Study/B.md",
+        saved: true,
+      },
+    ];
+    expect(entriesFromRows(rows, "mtd-sync")).toBeNull();
+    expect(
+      validateRouteRow(rows[1]!, rows, "mtd-sync")
+    ).toBe("list_conflict");
   });
 
   it("creates a default draft tag", () => {

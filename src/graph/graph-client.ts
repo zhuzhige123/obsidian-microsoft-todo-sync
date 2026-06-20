@@ -88,4 +88,25 @@ export class GraphClient {
     }
     return JSON.parse(response.text) as T;
   }
+
+  async requestBinary(method: string, path: string): Promise<ArrayBuffer> {
+    const token = await this.auth.getAccessToken();
+    const url = path.startsWith("https://")
+      ? path
+      : `https://graph.microsoft.com/v1.0${path}`;
+    const response = await requestUrl({
+      url,
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      throw: false,
+    });
+
+    if (response.status >= 400) {
+      throw new GraphApiError(response.status, method, path, response.text);
+    }
+
+    return response.arrayBuffer;
+  }
 }

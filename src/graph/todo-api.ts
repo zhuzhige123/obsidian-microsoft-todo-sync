@@ -118,10 +118,30 @@ export class TodoApi {
     );
   }
 
+  async updateLinkedResource(
+    listId: string,
+    taskId: string,
+    resourceId: string,
+    patch: Partial<GraphLinkedResource>
+  ): Promise<GraphLinkedResource> {
+    return this.graph.request<GraphLinkedResource>(
+      "PATCH",
+      `/me/todo/lists/${listId}/tasks/${taskId}/linkedResources/${resourceId}`,
+      patch
+    );
+  }
+
+  async deleteLinkedResource(listId: string, taskId: string, resourceId: string): Promise<void> {
+    await this.graph.request<void>(
+      "DELETE",
+      `/me/todo/lists/${listId}/tasks/${taskId}/linkedResources/${resourceId}`
+    );
+  }
+
   async deltaTasks(listId: string, deltaLink?: string): Promise<GraphDeltaResponse<GraphTodoTask>> {
     const url =
       deltaLink ??
-      `https://graph.microsoft.com/v1.0/me/todo/lists/${listId}/tasks/delta`;
+      `https://graph.microsoft.com/v1.0/me/todo/lists/${listId}/tasks/delta?$expand=checklistItems`;
     return this.graph.requestRawUrl<GraphDeltaResponse<GraphTodoTask>>("GET", url);
   }
 }

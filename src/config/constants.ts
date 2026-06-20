@@ -4,9 +4,6 @@
  */
 export const DEFAULT_OAUTH_CLIENT_ID = "28d3e5ae-00e3-4ff6-9443-742f353cf511";
 
-/** @deprecated Use DEFAULT_OAUTH_CLIENT_ID */
-export const DEFAULT_AZURE_CLIENT_ID = DEFAULT_OAUTH_CLIENT_ID;
-
 export const OAUTH_REDIRECT_URI = "obsidian://mstodo-auth";
 
 export const AUTH_PROTOCOL_NAME = "mstodo-auth";
@@ -21,5 +18,3 @@ export const AUTH_REFRESH_TOKEN_KEY = "mtd-ms-refresh-token";
 export const PROTOCOL_NAME = "mtd-sync";
 
 export const BACKLINK_SEPARATOR = "---";
-
-export const BACKLINK_HEADER = "在 Obsidian 中打开：";

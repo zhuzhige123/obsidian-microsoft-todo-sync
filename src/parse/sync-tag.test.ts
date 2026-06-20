@@ -4,8 +4,10 @@ import {
   formatListRoutesText,
   formatRouteDisplayTag,
   hasSyncTag,
+  normalizeInboundVaultPath,
   parseListRoutesText,
   parseRouteDisplayInput,
+  resolveInboundRoute,
   resolveTargetListName,
   stripHashTags,
 } from "./sync-tag";
@@ -13,9 +15,10 @@ import {
 const scope = {
   syncTag: "msd",
   todoListName: "Obsidian Sync",
+  defaultInboundVaultPath: "Microsoft To Do/Inbox.md",
   listRoutes: [
-    { tagPath: "基础任务", listName: "MSD 基础" },
-    { tagPath: "学习任务", listName: "MSD 学习" },
+    { tagPath: "基础任务", listName: "MSD 基础", vaultPath: "Care/Basic.md" },
+    { tagPath: "学习任务", listName: "MSD 学习", vaultPath: "Study/Tasks.md" },
   ],
 };
 
@@ -41,8 +44,8 @@ describe("sync-tag", () => {
     const routes = {
       ...scope,
       listRoutes: [
-        { tagPath: "基础", listName: "Short" },
-        { tagPath: "基础任务", listName: "Long" },
+        { tagPath: "基础", listName: "Short", vaultPath: "A.md" },
+        { tagPath: "基础任务", listName: "Long", vaultPath: "B.md" },
       ],
     };
     expect(resolveTargetListName("- [ ] a #msd/基础任务", routes)).toBe("Long");
@@ -59,14 +62,35 @@ describe("sync-tag", () => {
     expect(parseRouteDisplayInput("#msd", "msd").error).toBe("namespace_only");
   });
 
+  it("parses mixed-case route prefixes case-insensitively", () => {
+    expect(parseRouteDisplayInput("#MSD/基础护理", "msd")).toEqual({ tagPath: "基础护理" });
+    expect(parseRouteDisplayInput("#msd/基础护理", "MSD")).toEqual({ tagPath: "基础护理" });
+    expect(resolveTargetListName("- [ ] a #MSD/基础任务", scope)).toBe("MSD 基础");
+  });
+
   it("parses and formats list route text", () => {
-    const text = "基础任务 | MSD 基础\n学习任务=MSD 学习";
+    const text = "基础任务 | MSD 基础 | Care/Basic.md\n学习任务 | MSD 学习 | Study/Tasks.md";
     expect(parseListRoutesText(text)).toEqual([
-      { tagPath: "基础任务", listName: "MSD 基础" },
-      { tagPath: "学习任务", listName: "MSD 学习" },
+      { tagPath: "基础任务", listName: "MSD 基础", vaultPath: "Care/Basic.md" },
+      { tagPath: "学习任务", listName: "MSD 学习", vaultPath: "Study/Tasks.md" },
     ]);
     expect(formatListRoutesText(parseListRoutesText(text))).toBe(
-      "基础任务 | MSD 基础\n学习任务 | MSD 学习"
+      "基础任务 | MSD 基础 | Care/Basic.md\n学习任务 | MSD 学习 | Study/Tasks.md"
     );
+  });
+
+  it("resolves inbound routes from list names", () => {
+    expect(resolveInboundRoute("MSD 基础", scope)).toEqual({
+      vaultPath: "Care/Basic.md",
+      tagPath: "基础任务",
+    });
+    expect(resolveInboundRoute("Obsidian Sync", scope)).toEqual({
+      vaultPath: "Microsoft To Do/Inbox.md",
+    });
+  });
+
+  it("normalizes inbound vault paths", () => {
+    expect(normalizeInboundVaultPath("folder/note")).toBe("folder/note.md");
+    expect(normalizeInboundVaultPath("folder/note.md")).toBe("folder/note.md");
   });
 });

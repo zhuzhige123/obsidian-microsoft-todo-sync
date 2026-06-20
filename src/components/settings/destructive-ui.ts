@@ -4,6 +4,10 @@ type DestructiveButton = ButtonComponent & {
   setDestructive?: () => ButtonComponent;
 };
 
+type LegacyDestructiveButton = {
+  setWarning: () => ButtonComponent;
+};
+
 /** Obsidian 1.13+ exposes setDestructive; older app versions still use setWarning. */
 export function styleDestructiveButton(button: ButtonComponent): void {
   const candidate = button as DestructiveButton;
@@ -11,6 +15,5 @@ export function styleDestructiveButton(button: ButtonComponent): void {
     candidate.setDestructive();
     return;
   }
-  // eslint-disable-next-line @typescript-eslint/no-deprecated -- fallback for Obsidian < 1.13 where setDestructive is missing
-  button.setWarning();
+  (button as unknown as LegacyDestructiveButton).setWarning();
 }

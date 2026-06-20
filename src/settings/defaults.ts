@@ -10,11 +10,14 @@ export const DEFAULT_SETTINGS: MtdPluginSettings = {
   notifyOnAutoSync: true,
   syncTag: "mtd-sync",
   todoListName: "Obsidian Sync",
+  defaultInboundVaultPath: "Microsoft To Do/Inbox.md",
   listRoutes: [],
   deltaIntervalMinutes: 5,
   remoteDeletePolicy: "delete",
   appendBacklinkToTodo: true,
   createLinkedResource: true,
+  cleanupRemoteOnUnlink: true,
+  stripInboundRouteHeader: true,
   azureClientId: "",
   azureTenant: "common",
   accountDisplayName: "",
@@ -32,19 +35,29 @@ function normalizeListRoutes(raw: unknown): ListRouteEntry[] {
     const record = item as Record<string, unknown>;
     const tagPath = typeof record.tagPath === "string" ? record.tagPath.trim() : "";
     const listName = typeof record.listName === "string" ? record.listName.trim() : "";
+    const vaultPath = typeof record.vaultPath === "string" ? record.vaultPath.trim() : "";
     if (tagPath && listName) {
-      routes.push({ tagPath, listName });
+      routes.push({ tagPath, listName, vaultPath });
     }
   }
   return routes;
 }
 
+function normalizeBoolean(value: unknown, fallback: boolean): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  return fallback;
+}
+
 export function normalizeSettings(raw: Partial<MtdPluginSettings> | undefined): MtdPluginSettings {
   return {
     ...DEFAULT_SETTINGS,
-    ...raw,
     syncTag: String(raw?.syncTag ?? DEFAULT_SETTINGS.syncTag).replace(/^#/, "").trim() || DEFAULT_SETTINGS.syncTag,
     todoListName: String(raw?.todoListName ?? DEFAULT_SETTINGS.todoListName).trim() || DEFAULT_SETTINGS.todoListName,
+    defaultInboundVaultPath:
+      String(raw?.defaultInboundVaultPath ?? DEFAULT_SETTINGS.defaultInboundVaultPath).trim() ||
+      DEFAULT_SETTINGS.defaultInboundVaultPath,
     listRoutes: normalizeListRoutes(raw?.listRoutes),
     deltaIntervalMinutes: clampInt(
       Number(raw?.deltaIntervalMinutes),
@@ -76,8 +89,26 @@ export function normalizeSettings(raw: Partial<MtdPluginSettings> | undefined): 
       SETTINGS_BOUNDS.autoSyncTagDelaySeconds.max,
       SETTINGS_BOUNDS.autoSyncTagDelaySeconds.default
     ),
-    syncAfterLogin: raw?.syncAfterLogin ?? DEFAULT_SETTINGS.syncAfterLogin,
-    notifyOnAutoSync: raw?.notifyOnAutoSync ?? DEFAULT_SETTINGS.notifyOnAutoSync,
+    syncAfterLogin: normalizeBoolean(raw?.syncAfterLogin, DEFAULT_SETTINGS.syncAfterLogin),
+    notifyOnAutoSync: normalizeBoolean(raw?.notifyOnAutoSync, DEFAULT_SETTINGS.notifyOnAutoSync),
+    appendBacklinkToTodo: normalizeBoolean(
+      raw?.appendBacklinkToTodo,
+      DEFAULT_SETTINGS.appendBacklinkToTodo
+    ),
+    createLinkedResource: normalizeBoolean(
+      raw?.createLinkedResource,
+      DEFAULT_SETTINGS.createLinkedResource
+    ),
+    cleanupRemoteOnUnlink: normalizeBoolean(
+      raw?.cleanupRemoteOnUnlink,
+      DEFAULT_SETTINGS.cleanupRemoteOnUnlink
+    ),
+    stripInboundRouteHeader: normalizeBoolean(
+      raw?.stripInboundRouteHeader,
+      DEFAULT_SETTINGS.stripInboundRouteHeader
+    ),
+    azureClientId: String(raw?.azureClientId ?? DEFAULT_SETTINGS.azureClientId).trim(),
+    azureTenant: String(raw?.azureTenant ?? DEFAULT_SETTINGS.azureTenant).trim() || DEFAULT_SETTINGS.azureTenant,
     accountDisplayName: "",
   };
 }

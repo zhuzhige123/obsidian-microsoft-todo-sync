@@ -2,21 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { TFile } from "obsidian";
 import { en } from "../i18n/en";
 import { DEFAULT_SETTINGS } from "../settings/defaults";
-import { createEmptyPluginData, readLegacyAuthState, SyncEngine } from "./sync-engine";
-
-describe("readLegacyAuthState", () => {
-  it("reads refresh token from legacy data.json auth blob", () => {
-    expect(readLegacyAuthState({ refreshToken: "rt", accessToken: "at", expiresAt: 1 })).toEqual({
-      refreshToken: "rt",
-      accessToken: "at",
-      expiresAt: 1,
-    });
-  });
-
-  it("returns undefined when refresh token is missing", () => {
-    expect(readLegacyAuthState({ accessToken: "at" })).toBeUndefined();
-  });
-});
+import { createEmptyPluginData } from "./plugin-data";
+import { SyncEngine } from "./sync-engine";
 
 describe("SyncEngine", () => {
   it("skips push when not signed in", async () => {
@@ -59,11 +46,62 @@ describe("SyncEngine", () => {
       graph: {} as never,
     });
 
-    vi.spyOn(engine as never, "pushFileInner").mockImplementation(runOp);
-    vi.spyOn(engine as never, "pullDeltaInner").mockImplementation(runOp);
+    const outbound = (engine as unknown as { outbound: { pushFile: typeof runOp } }).outbound;
+    const delta = (engine as unknown as { delta: { pullDelta: typeof runOp } }).delta;
+    vi.spyOn(outbound, "pushFile").mockImplementation(runOp);
+    vi.spyOn(delta, "pullDelta").mockImplementation(runOp);
 
     const file = { path: "note.md" } as TFile;
     await Promise.all([engine.pushFile(file), engine.pullDelta({ silent: true })]);
     expect(maxActive).toBe(1);
+  });
+
+  it("accepts injected TodoApi", async () => {
+    const ensureTaskList = vi.fn();
+    const engine = new SyncEngine(
+      {
+        app: {
+          vault: {
+            read: vi.fn(async () => "- [ ] task #mtd-sync <!-- mtd:id=mtd-1 -->"),
+            modify: vi.fn(),
+          },
+          metadataCache: { getFileCache: vi.fn(() => ({ listItems: [] })) },
+        } as never,
+        getSettings: () => DEFAULT_SETTINGS,
+        getStrings: () => en,
+        loadData: async () => createEmptyPluginData(DEFAULT_SETTINGS),
+        saveData: vi.fn(async () => undefined),
+        auth: { isLoggedIn: true } as never,
+        graph: {} as never,
+      },
+      { ensureTaskList } as never
+    );
+
+    expect(engine).toBeDefined();
+    expect(ensureTaskList).not.toHaveBeenCalled();
+  });
+
+  it("exposes live index during queued sync work", async () => {
+    let sawLiveIndex = false;
+    const engine = new SyncEngine({
+      app: {} as never,
+      getSettings: () => DEFAULT_SETTINGS,
+      getStrings: () => en,
+      loadData: async () => createEmptyPluginData(DEFAULT_SETTINGS),
+      saveData: vi.fn(async () => undefined),
+      auth: { isLoggedIn: true } as never,
+      graph: {} as never,
+    });
+    const outbound = (engine as unknown as { outbound: { pushFile: () => Promise<number> } })
+      .outbound;
+    vi.spyOn(outbound, "pushFile").mockImplementation(async () => {
+      sawLiveIndex = engine.getLiveIndex() !== null;
+      return 0;
+    });
+
+    await engine.pushFile({ path: "note.md" } as TFile);
+
+    expect(sawLiveIndex).toBe(true);
+    expect(engine.getLiveIndex()).toBeNull();
   });
 });

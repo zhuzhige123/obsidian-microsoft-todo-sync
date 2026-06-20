@@ -19,10 +19,19 @@ describe("normalizeSettings", () => {
     expect(
       normalizeSettings({
         listRoutes: [
-          { tagPath: "study", listName: "Study" },
-          { tagPath: "", listName: "Bad" },
+          { tagPath: "study", listName: "Study", vaultPath: "Study.md" },
+          { tagPath: "", listName: "Bad", vaultPath: "" },
         ],
       }).listRoutes
-    ).toEqual([{ tagPath: "study", listName: "Study" }]);
+    ).toEqual([{ tagPath: "study", listName: "Study", vaultPath: "Study.md" }]);
+  });
+
+  it("coerces invalid boolean settings on load", () => {
+    expect(
+      normalizeSettings({ appendBacklinkToTodo: "yes" as unknown as boolean }).appendBacklinkToTodo
+    ).toBe(true);
+    expect(
+      normalizeSettings({ createLinkedResource: null as unknown as boolean }).createLinkedResource
+    ).toBe(true);
   });
 });

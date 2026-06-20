@@ -19,7 +19,11 @@ export function mtdChipIcon(mtd: MtdComment): IconName {
   return "cloud";
 }
 
-export function createMtdSyncChipElement(mtd: MtdComment, chips: MtdStrings["chips"]): HTMLElement {
+export function createMtdSyncChipElement(
+  mtd: MtdComment,
+  chips: MtdStrings["chips"],
+  options?: { onActivate?: (event: MouseEvent) => void }
+): HTMLElement {
   const span = globalThis.document.createElement("span");
   span.className = "mtd-sync-chip";
   if (mtd.step && !mtd.id) {
@@ -32,5 +36,16 @@ export function createMtdSyncChipElement(mtd: MtdComment, chips: MtdStrings["chi
   setIcon(span, mtdChipIcon(mtd));
   span.title = tooltip;
   span.setAttribute("aria-label", tooltip);
+  if (mtd.id) {
+    span.setAttribute("data-mtd-id", mtd.id);
+  }
+  if (mtd.step) {
+    span.setAttribute("data-mtd-step", mtd.step);
+  }
+  if (mtd.id && options?.onActivate) {
+    span.classList.add("clickable-icon", "mtd-sync-chip--interactive");
+    span.addEventListener("click", options.onActivate);
+    span.addEventListener("contextmenu", options.onActivate);
+  }
   return span;
 }
