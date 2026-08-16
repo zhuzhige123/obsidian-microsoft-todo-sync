@@ -58,7 +58,7 @@ export function registerTaskCommands(plugin: MicrosoftTodoSyncPlugin): void {
           }
         })
         .catch((error) => {
-          globalThis.console.error("Microsoft To Do sync: push task command failed", error);
+          window.console.error("Microsoft To Do sync: push task command failed", error);
           const message = error instanceof Error ? error.message : String(error);
           new Notice(
             formatString(stringsFor(plugin).notices.syncFailed, { message: message.slice(0, 180) })

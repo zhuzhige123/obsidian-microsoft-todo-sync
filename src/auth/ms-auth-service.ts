@@ -79,7 +79,7 @@ export class MsAuthService {
       code_challenge_method: "S256",
     });
     const url = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?${params.toString()}`;
-    globalThis.window.open(url);
+    window.window.open(url);
   }
 
   async completeLogin(code: string): Promise<void> {

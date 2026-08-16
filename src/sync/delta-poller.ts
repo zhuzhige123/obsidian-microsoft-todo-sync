@@ -5,14 +5,14 @@ export class DeltaPoller {
 
   start(plugin: Plugin, intervalMs: number, tick: () => void): void {
     this.stop();
-    const id = globalThis.setInterval(tick, intervalMs) as unknown as number;
+    const id = window.setInterval(tick, intervalMs);
     this.intervalId = id;
     plugin.registerInterval(id);
   }
 
   stop(): void {
     if (this.intervalId !== null) {
-      globalThis.clearInterval(this.intervalId);
+      window.clearInterval(this.intervalId);
       this.intervalId = null;
     }
   }

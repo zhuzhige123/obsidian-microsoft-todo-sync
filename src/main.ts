@@ -144,11 +144,11 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
     registerTaskCommands(this);
 
     if (this.auth.isLoggedIn) {
-      const startupPullId = globalThis.setTimeout(() => {
+      const startupPullId = window.setTimeout(() => {
         void this.syncEngine.pullDelta({ silent: true });
-      }, 5000) as unknown as number;
+      }, 5000);
       this.register(() => {
-        globalThis.clearTimeout(startupPullId);
+        window.clearTimeout(startupPullId);
       });
     }
   }
@@ -333,7 +333,7 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
         new Notice(formatString(this.strings().notices.pushed, { count: String(pushed) }));
       }
     } catch (error) {
-      globalThis.console.error("Microsoft To Do auto sync failed:", error);
+      window.console.error("Microsoft To Do auto sync failed:", error);
     }
   }
 
@@ -361,7 +361,7 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
         lineHint: parsed.lineHint,
       });
     } catch (error) {
-      globalThis.console.error("Microsoft To Do sync: deep link failed", error);
+      window.console.error("Microsoft To Do sync: deep link failed", error);
       const message = error instanceof Error ? error.message : String(error);
       new Notice(
         formatString(this.strings().notices.syncFailed, { message: message.slice(0, 180) })

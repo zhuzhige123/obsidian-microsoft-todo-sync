@@ -15,7 +15,7 @@ export function registerTaskPostProcessor(plugin: Plugin): void {
     const strings = getStrings(mtdPlugin.settings.uiLanguage);
     void processElement(element, context, mtdPlugin, strings.chips, strings.badges.myDay).catch(
       (error) => {
-        globalThis.console.error("Microsoft To Do sync: reading view chip failed", error);
+        window.console.error("Microsoft To Do sync: reading view chip failed", error);
       }
     );
   });
@@ -55,7 +55,7 @@ async function loadMtdLineMap(
     const content = await plugin.app.vault.cachedRead(file);
     return indexMtdIdsByLine(content.split("\n"));
   } catch (error) {
-    globalThis.console.warn("Microsoft To Do sync: could not cache task lines", error);
+    window.console.warn("Microsoft To Do sync: could not cache task lines", error);
     return new Map();
   }
 }
@@ -88,7 +88,7 @@ function stripMtdCommentsInTree(root: HTMLElement): void {
   const toClean: Text[] = [];
   let node = walker.nextNode();
   while (node) {
-    if (node instanceof Text && findMtdCommentMatchesInLine(node.textContent ?? "").length > 0) {
+    if (node.instanceOf(Text) && findMtdCommentMatchesInLine(node.textContent ?? "").length > 0) {
       toClean.push(node);
     }
     node = walker.nextNode();

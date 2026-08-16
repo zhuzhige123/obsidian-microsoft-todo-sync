@@ -25,7 +25,7 @@ export class TaskLocateOverlay {
     }
     this.clear();
 
-    const doc = globalThis.document;
+    const doc = window.document;
     const overlay = doc.body.createDiv({ cls: OVERLAY_CLASS });
     overlay.classList.add(`${OVERLAY_CLASS}--measuring`);
     overlay.setCssProps({ top: "-9999px", left: "-9999px" });
@@ -39,12 +39,12 @@ export class TaskLocateOverlay {
     const top = clamp(
       rect.top + Math.min(12, Math.max(4, rect.height * 0.15)),
       12,
-      Math.max(12, globalThis.innerHeight - overlayHeight - 12)
+      Math.max(12, window.innerHeight - overlayHeight - 12)
     );
     const left = clamp(
       rect.left + Math.min(16, Math.max(6, rect.width * 0.08)),
       12,
-      Math.max(12, globalThis.innerWidth - overlayWidth - 12)
+      Math.max(12, window.innerWidth - overlayWidth - 12)
     );
 
     overlay.classList.remove(`${OVERLAY_CLASS}--measuring`);
@@ -54,13 +54,13 @@ export class TaskLocateOverlay {
     });
 
     this.overlayEl = overlay;
-    this.timer = globalThis.setTimeout(() => this.clear(), durationMs) as unknown as number;
+    this.timer = window.setTimeout(() => this.clear(), durationMs);
     return true;
   }
 
   clear(): void {
     if (this.timer !== null) {
-      globalThis.clearTimeout(this.timer);
+      window.clearTimeout(this.timer);
       this.timer = null;
     }
     this.overlayEl?.remove();
@@ -144,8 +144,8 @@ function normalizeLocateText(value: string): string {
 }
 
 function escapeCssAttributeValue(value: string): string {
-  if (typeof globalThis.CSS !== "undefined" && typeof globalThis.CSS.escape === "function") {
-    return globalThis.CSS.escape(value);
+  if (typeof window.CSS !== "undefined" && typeof window.CSS.escape === "function") {
+    return window.CSS.escape(value);
   }
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }

@@ -102,18 +102,18 @@ export class AutoSyncScheduler {
   private schedulePush(file: TFile, delayMs: number): void {
     const existing = this.idleTimers.get(file.path);
     if (existing !== undefined) {
-      globalThis.clearTimeout(existing);
+      window.clearTimeout(existing);
     }
-    const timer = globalThis.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       this.idleTimers.delete(file.path);
       void this.host.pushFile(file);
-    }, delayMs) as unknown as number;
+    }, delayMs);
     this.idleTimers.set(file.path, timer);
   }
 
   detach(): void {
     for (const timer of this.idleTimers.values()) {
-      globalThis.clearTimeout(timer);
+      window.clearTimeout(timer);
     }
     this.idleTimers.clear();
   }

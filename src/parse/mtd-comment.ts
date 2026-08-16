@@ -107,6 +107,6 @@ export function upsertMtdComment(line: string, patch: Partial<MtdComment>): stri
 }
 
 export function generateMtdId(): string {
-  const suffix = globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+  const suffix = window.crypto.randomUUID().replace(/-/g, "").slice(0, 8);
   return `mtd-${suffix}`;
 }

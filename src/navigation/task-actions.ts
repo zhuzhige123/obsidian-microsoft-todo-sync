@@ -6,7 +6,7 @@ export function buildMicrosoftTodoTaskUrl(graphTaskId: string): string {
 }
 
 export function openMicrosoftTodoTask(graphTaskId: string): void {
-  globalThis.open(buildMicrosoftTodoTaskUrl(graphTaskId), "_blank", "noopener");
+  window.open(buildMicrosoftTodoTaskUrl(graphTaskId), "_blank", "noopener");
 }
 
 export async function copyObsidianTaskLink(
@@ -20,7 +20,7 @@ export async function copyObsidianTaskLink(
     format: "id-only",
   });
   try {
-    await globalThis.navigator.clipboard.writeText(uri);
+    await window.navigator.clipboard.writeText(uri);
     new Notice(notices.linkCopied);
     return true;
   } catch {

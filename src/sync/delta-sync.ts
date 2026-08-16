@@ -81,7 +81,7 @@ export class DeltaSync {
               }
             } catch (error) {
               pageFailed = true;
-              globalThis.console.error("Microsoft To Do sync: delta item failed", error);
+              window.console.error("Microsoft To Do sync: delta item failed", error);
             }
           }
 
@@ -124,7 +124,7 @@ export class DeltaSync {
   }
 
   private reportDeltaFailure(error: unknown, silent?: boolean): void {
-    globalThis.console.error("Microsoft To Do sync: delta pull failed", error);
+    window.console.error("Microsoft To Do sync: delta pull failed", error);
     if (silent) {
       return;
     }

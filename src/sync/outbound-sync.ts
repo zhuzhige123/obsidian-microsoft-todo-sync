@@ -138,7 +138,7 @@ export class OutboundSync {
         } else {
           processedMtdIds.add(`line:${task.line}`);
         }
-        globalThis.console.error("Microsoft To Do sync failed:", error);
+        window.console.error("Microsoft To Do sync failed:", error);
         if (!options.silent) {
           const message = error instanceof Error ? error.message : String(error);
           const strings = this.ctx.host.getStrings();
@@ -152,7 +152,7 @@ export class OutboundSync {
         await this.ctx.todoApi.deleteTaskIfExists(entry.graphListId, entry.graphTaskId);
         index.removeByMtdId(entry.mtdId);
       } catch (error) {
-        globalThis.console.error("Microsoft To Do sync: stale task cleanup failed", error);
+        window.console.error("Microsoft To Do sync: stale task cleanup failed", error);
       }
     }
 

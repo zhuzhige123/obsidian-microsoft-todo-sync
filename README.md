@@ -101,9 +101,9 @@ flowchart LR
 | `- [/]` | 进行中 |
 | 任务下缩进段落 | 任务详情备注 |
 | 一层 `- [ ]` 子项 | 步骤（Steps） |
-| 行尾 `<!-- mtd:... -->` | 插件内部映射（阅读视图自动隐藏） |
+| 行尾机器元数据注释 | 插件内部映射（阅读视图自动隐藏） |
 
-> **说明**：行尾的 `<!-- mtd:id=... -->` 等机器信息用于保持双向映射，阅读模式下不会显示，也不会用可见的 `🆔` 污染任务正文。
+> **说明**：任务行尾会写入 `mtd:id=…` 等形式的 HTML 注释元数据以保持双向映射；阅读模式下不会显示，也不会用可见的 `🆔` 污染任务正文。
 
 ## 安装
 
@@ -272,9 +272,9 @@ In **Dedicated sync lists (sub-tag routes)**, map sub-tags to a To Do list and d
 | `- [/]` | In progress |
 | Indented paragraphs under the task | Task body notes |
 | One level of `- [ ]` sub-items | Checklist steps |
-| Trailing `<!-- mtd:... -->` | Internal mapping (hidden in reading view) |
+| Trailing machine metadata comment | Internal mapping (hidden in reading view) |
 
-> **Note**: `<!-- mtd:id=... -->` and related metadata keep the two-way link. Reading view hides it—no visible `🆔` clutter in your task text.
+> **Note**: The plugin stores mapping as an HTML comment with `mtd:id=…` (and related fields) at the end of the line. Reading view hides it—no visible `🆔` clutter in your task text.
 
 ## Installation
 

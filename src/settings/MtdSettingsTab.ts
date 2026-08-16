@@ -15,6 +15,15 @@ export class MtdSettingsTab extends PluginSettingTab {
     });
   }
 
+  /**
+   * Declared for Obsidian 1.13+ settings search lint.
+   * Return empty so Obsidian still calls `display()` and keeps the Svelte settings UI.
+   * A full declarative migration can replace this later without changing minAppVersion.
+   */
+  getSettingDefinitions(): [] {
+    return [];
+  }
+
   display(): void {
     void this.ensurePanel();
   }

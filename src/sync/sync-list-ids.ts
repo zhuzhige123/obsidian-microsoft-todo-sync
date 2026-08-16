@@ -85,7 +85,7 @@ export async function buildListIdToNameMap(
       listIdToName.set(list.id, list.displayName);
     }
   } catch (error) {
-    globalThis.console.warn("Microsoft To Do sync: could not list task lists", error);
+    window.console.warn("Microsoft To Do sync: could not list task lists", error);
   }
   for (const name of collectManagedListNames(settings)) {
     const id = listIdByName.get(name);

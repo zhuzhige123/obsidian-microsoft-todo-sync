@@ -6,7 +6,7 @@ import { PlainTextParser } from "eslint-plugin-obsidianmd/dist/lib/plainTextPars
 
 export default defineConfig([
   {
-    ignores: ["main.js", "dist/**", "node_modules/**", "src/**/*.test.ts"],
+    ignores: ["main.js", "dist/**", "node_modules/**", "src/**/*.test.ts", "src/test/**"],
   },
   ...obsidianmd.configs.recommendedWithLocalesEn,
   {

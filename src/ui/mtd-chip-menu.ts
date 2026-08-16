@@ -24,7 +24,7 @@ function requireSignedIn(context: MtdChipMenuContext): boolean {
 }
 
 function reportChipError(context: MtdChipMenuContext, error: unknown): void {
-  globalThis.console.error("Microsoft To Do sync: chip action failed", error);
+  window.console.error("Microsoft To Do sync: chip action failed", error);
   const message = error instanceof Error ? error.message : String(error);
   new Notice(
     formatString(getStrings(context.uiLanguage).chips.actionFailed, {

@@ -137,7 +137,7 @@ export class SyncEngine {
       try {
         return await this.outbound.pushTaskAt(file, line);
       } catch (error) {
-        globalThis.console.error("Microsoft To Do sync: push task failed", error);
+        window.console.error("Microsoft To Do sync: push task failed", error);
         throw error;
       }
     });
@@ -182,7 +182,7 @@ export class SyncEngine {
         await savePluginIndex(this.ctx.host.loadData, this.ctx.host.saveData, index);
         return true;
       } catch (error) {
-        globalThis.console.error("Microsoft To Do sync: pull task failed", error);
+        window.console.error("Microsoft To Do sync: pull task failed", error);
         throw error;
       }
     });
@@ -206,7 +206,7 @@ export class SyncEngine {
           try {
             await cleanupRemoteOnUnlink(this.ctx.todoApi, entry, settings);
           } catch (error) {
-            globalThis.console.error("Microsoft To Do sync: remote unlink cleanup failed", error);
+            window.console.error("Microsoft To Do sync: remote unlink cleanup failed", error);
           }
         }
 
@@ -219,7 +219,7 @@ export class SyncEngine {
         await savePluginIndex(this.ctx.host.loadData, this.ctx.host.saveData, index);
         return true;
       } catch (error) {
-        globalThis.console.error("Microsoft To Do sync: unlink task failed", error);
+        window.console.error("Microsoft To Do sync: unlink task failed", error);
         throw error;
       }
     });

@@ -64,7 +64,7 @@ export class InboundSync {
       try {
         remoteTask = await this.ctx.todoApi.getTask(listId, graphTask.id);
       } catch (error) {
-        globalThis.console.warn("Microsoft To Do sync: falling back to delta task payload", error);
+        window.console.warn("Microsoft To Do sync: falling back to delta task payload", error);
       }
 
       const route = resolveInboundRoute(listName, settings);
@@ -162,7 +162,7 @@ export class InboundSync {
 
       return 1;
     } catch (error) {
-      globalThis.console.error("Microsoft To Do sync: inbound task creation failed", error);
+      window.console.error("Microsoft To Do sync: inbound task creation failed", error);
       if (!options.silent) {
         const message = error instanceof Error ? error.message : String(error);
         const strings = this.ctx.host.getStrings();
@@ -189,7 +189,7 @@ export class InboundSync {
     try {
       remoteTask = await this.ctx.todoApi.getTask(entry.graphListId, graphTask.id);
     } catch (error) {
-      globalThis.console.warn("Microsoft To Do sync: falling back to delta task payload", error);
+      window.console.warn("Microsoft To Do sync: falling back to delta task payload", error);
     }
 
     const resolved = await resolveIndexedVaultTask(this.ctx.host.app, entry, index, settings);

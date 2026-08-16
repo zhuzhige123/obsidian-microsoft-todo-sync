@@ -24,8 +24,7 @@ export function createMtdSyncChipElement(
   chips: MtdStrings["chips"],
   options?: { onActivate?: (event: MouseEvent) => void }
 ): HTMLElement {
-  const span = globalThis.document.createElement("span");
-  span.className = "mtd-sync-chip";
+  const span = window.createSpan({ cls: "mtd-sync-chip" });
   if (mtd.step && !mtd.id) {
     span.classList.add("mtd-sync-chip--step");
   }

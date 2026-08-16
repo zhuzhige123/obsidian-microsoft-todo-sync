@@ -33,7 +33,7 @@ export function highlightPreviewTaskElement(
   durationMs = DEFAULT_DURATION_MS
 ): void {
   element.classList.add(PREVIEW_HIGHLIGHT_CLASS);
-  globalThis.setTimeout(() => {
+  window.setTimeout(() => {
     element.classList.remove(PREVIEW_HIGHLIGHT_CLASS);
   }, durationMs);
 }
@@ -46,7 +46,7 @@ export function showRowHighlightBand(
     return false;
   }
 
-  const band = globalThis.document.body.createDiv({ cls: ROW_BAND_CLASS });
+  const band = window.document.body.createDiv({ cls: ROW_BAND_CLASS });
   band.setCssProps({
     top: `${rect.top}px`,
     left: `${rect.left}px`,
@@ -54,7 +54,7 @@ export function showRowHighlightBand(
     height: `${Math.max(rect.height, 20)}px`,
   });
 
-  globalThis.setTimeout(() => {
+  window.setTimeout(() => {
     band.remove();
   }, durationMs);
   return true;
@@ -95,7 +95,7 @@ function findCmLineElement(editor: Editor | undefined, line: number): HTMLElemen
     const dom = view.domAtPos(lineInfo.from);
     const node = dom.node;
     const element =
-      node instanceof Text ? node.parentElement : domInstanceOf(node, HTMLElement) ? node : null;
+      node.instanceOf(Text) ? node.parentElement : domInstanceOf(node, HTMLElement) ? node : null;
     const cmLine = element?.closest(".cm-line");
     return domInstanceOf(cmLine, HTMLElement) ? cmLine : null;
   } catch {

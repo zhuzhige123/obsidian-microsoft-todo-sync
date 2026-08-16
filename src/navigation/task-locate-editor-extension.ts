@@ -68,7 +68,7 @@ export function requestEditorLocateLineHighlight(editor: Editor, line: number, d
     return false;
   }
 
-  globalThis.setTimeout(() => {
+  window.setTimeout(() => {
     if (highlightedByView.get(view) === line) {
       highlightedByView.delete(view);
     }

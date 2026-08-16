@@ -38,7 +38,7 @@ export class TaskLocateNavigation {
   dispose(): void {
     this.disposed = true;
     for (const timerId of this.pendingTimers) {
-      globalThis.clearTimeout(timerId);
+      window.clearTimeout(timerId);
     }
     this.pendingTimers.clear();
     this.overlay.clear();
@@ -218,7 +218,7 @@ export class TaskLocateNavigation {
       return;
     }
     const delay = attempt === 0 ? LOCATE_INITIAL_DELAY_MS : LOCATE_RETRY_DELAY_MS;
-    const timerId = globalThis.setTimeout(() => {
+    const timerId = window.setTimeout(() => {
       this.pendingTimers.delete(timerId);
       if (this.disposed) {
         return;
@@ -250,7 +250,7 @@ export class TaskLocateNavigation {
       if (attempt + 1 < LOCATE_MAX_ATTEMPTS) {
         this.flashLocateWithRetry(view, query, overlayLabel, attempt + 1, cmDone);
       }
-    }, delay) as unknown as number;
+    }, delay);
     this.pendingTimers.add(timerId);
   }
 }

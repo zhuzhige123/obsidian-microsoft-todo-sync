@@ -8,7 +8,7 @@ export function resolveLocale(language: UiLanguage): ResolvedLocale {
   if (language === "en" || language === "zh") {
     return language;
   }
-  const docLang = globalThis.document?.documentElement?.lang?.toLowerCase() ?? "";
+  const docLang = window.document?.documentElement?.lang?.toLowerCase() ?? "";
   if (docLang.startsWith("zh")) {
     return "zh";
   }

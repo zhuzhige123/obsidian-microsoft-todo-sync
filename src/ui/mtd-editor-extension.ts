@@ -49,8 +49,8 @@ export function registerMtdCommentEditorExtension(plugin: Plugin): void {
     }
 
     toDOM(): HTMLElement {
-      const element = createTaskBadgesElement(globalThis.document, this.hints);
-      return element ?? globalThis.document.createElement("span");
+      const element = createTaskBadgesElement(window.document, this.hints);
+      return element ?? window.createSpan();
     }
 
     ignoreEvent(): boolean {

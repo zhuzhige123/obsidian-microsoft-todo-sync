@@ -23,7 +23,8 @@ const BLOCKED_GLOBS = [
   /^\.env\./,
   /^\.desktop-hot-reload\//,
   /^node_modules\//,
-  /\.cjs$/,
+  // Local-only hot-reload helpers (build/lint *.cjs under scripts/ are tracked).
+  /^scripts\/(kill-vite|dev-watch)\.cjs$/,
   /\.log$/,
 ];
 

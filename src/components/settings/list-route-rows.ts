@@ -35,7 +35,7 @@ export function buildSavedRows(nextRoutes: ListRouteEntry[], tag: string): Route
 }
 
 export function newRouteRowId(): string {
-  return `draft-${globalThis.crypto.randomUUID()}`;
+  return `draft-${window.crypto.randomUUID()}`;
 }
 
 export function defaultRouteDisplayTag(syncTag: string): string {
