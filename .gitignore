@@ -1,0 +1,25 @@
+node_modules/
+main.js
+main.js.map
+styles.bundle.css
+.desktop-hot-reload/
+.dev-watch.lock.json
+*.cjs
+!scripts/merge-styles.cjs
+!scripts/hot-reload-utils.cjs
+!scripts/check-forbidden-eslint-disables.cjs
+!scripts/run-obsidian-community-lint.cjs
+!scripts/lint-community-audit.cjs
+!scripts/lint-obsidian-strict.cjs
+!scripts/obsidian-lint-targets.cjs
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+
+# --- Local-only (never push to any remote) ---
+docs/
+.cursor/
+AGENTS.md
+.community-export/
