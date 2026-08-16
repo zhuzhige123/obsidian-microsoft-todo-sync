@@ -342,7 +342,7 @@
             {/if}
             <div class="mtd-about-overview-item">
               <div class="mtd-about-overview-label">{strings.about.pluginId}</div>
-              <div class="mtd-about-overview-value"><code>obsidian-microsoft-todo-sync</code></div>
+              <div class="mtd-about-overview-value"><code>microsoft-todo-sync</code></div>
             </div>
 
             <div class="mtd-about-overview-section-label mtd-about-overview-section-label--separated">
