@@ -159,7 +159,7 @@ export const en: MtdStrings = {
     },
   },
   about: {
-    panelTitle: "Microsoft To Do Sync",
+    panelTitle: "MS To Do Sync",
     panelDescription: "Two-way sync for tagged Obsidian tasks with a dedicated Microsoft To Do list.",
     pluginInfo: "Plugin",
     pluginName: "Name",

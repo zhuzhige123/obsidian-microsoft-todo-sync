@@ -159,7 +159,7 @@ export const zh: MtdStrings = {
     },
   },
   about: {
-    panelTitle: "Microsoft To Do Sync",
+    panelTitle: "MS To Do Sync",
     panelDescription: "将带标签的 Obsidian 任务与专用 Microsoft To Do 列表双向同步。",
     pluginInfo: "插件",
     pluginName: "名称",

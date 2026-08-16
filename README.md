@@ -1,10 +1,10 @@
-# Microsoft To Do Sync
+# MS To Do Sync
 
 [中文](#中文文档) | [English](#english-documentation)
 
 <div align="center">
 
-![Microsoft To Do Sync](https://img.shields.io/badge/Obsidian-Microsoft%20To%20Do%20Sync-0078d4?style=for-the-badge)
+![MS To Do Sync](https://img.shields.io/badge/Obsidian-MS%20To%20Do%20Sync-0078d4?style=for-the-badge)
 ![Min Obsidian](https://img.shields.io/badge/Obsidian-1.11.4+-purple?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-GPL--3.0-orange?style=for-the-badge)
 
@@ -16,7 +16,7 @@
 
 ### 插件介绍
 
-如果你希望 **在 Obsidian 里规划任务，在手机上用 Microsoft To Do 执行**，可以试试 Microsoft To Do Sync。
+如果你希望 **在 Obsidian 里规划任务，在手机上用 Microsoft To Do 执行**，可以试试 MS To Do Sync。
 
 它适合：用 Markdown 任务清单管理学习/工作、又需要手机提醒与勾选的人；只想同步「明确标记」的任务、不想把整个 To Do 账号搬进库的人；需要把任务备注、一层子步骤一并带到 To Do 的人；在 To Do 里点一下就能回到 Obsidian 对应任务行的人。
 
@@ -57,7 +57,7 @@ flowchart LR
 
 ### A. 在 Obsidian 写任务，到手机执行（最常用）
 
-1. 打开 **设置 → Microsoft To Do Sync → 账户**，在浏览器中登录微软账号。
+1. 打开 **设置 → MS To Do Sync → 账户**，在浏览器中登录微软账号。
 2. 在 **常规 → 同步范围** 确认同步标签（默认 `mtd-sync`）与主列表名（默认 `Obsidian Sync`）。
 3. 在任意笔记中写任务，例如：`- [ ] 复习第三章 #mtd-sync 📅 2026-06-20`
 4. 保存或离开笔记后，任务出现在 To Do 对应列表；在手机上勾选完成，稍后会同步回 Obsidian 的 `- [x]`。
@@ -109,7 +109,7 @@ flowchart LR
 
 ### 方式一：社区插件（推荐）
 
-插件提交 Obsidian 官方审核后，可在 **设置 → 社区插件 → 浏览** 中搜索 **Microsoft To Do Sync** 安装。
+插件提交 Obsidian 官方审核后，可在 **设置 → 社区插件 → 浏览** 中搜索 **MS To Do Sync** 安装。
 
 ### 方式二：手动安装
 
@@ -117,12 +117,12 @@ flowchart LR
    - `main.js`
    - `manifest.json`
    - `styles.css`
-2. 复制到库内 `.obsidian/plugins/microsoft-todo-sync/`
-3. 重启 Obsidian，在 **设置 → 社区插件** 中启用 **Microsoft To Do Sync**
+2. 复制到库内 `.obsidian/plugins/ms-todo-sync/`
+3. 重启 Obsidian，在 **设置 → 社区插件** 中启用 **MS To Do Sync**
 
 ## 快速开始
 
-1. **登录**：设置 → **Microsoft To Do Sync** → **账户** → **登录**，在浏览器完成微软授权后返回 Obsidian。
+1. **登录**：设置 → **MS To Do Sync** → **账户** → **登录**，在浏览器完成微软授权后返回 Obsidian。
 2. **确认范围**：**常规** 中设置同步标签、主 To Do 列表名、入站默认笔记路径。
 3. **写一条任务**：在笔记中加入 `#mtd-sync`（或你的标签），保存。
 4. **检查 To Do**：打开手机或桌面 Microsoft To Do，在专用列表中查看是否出现任务。
@@ -166,11 +166,11 @@ Microsoft Graph **不提供** To Do「我的一天」读写接口。可用命令
 
 ### 与 Weave / EPUB 阅读器的关系？
 
-**无依赖。** Microsoft To Do Sync 是独立插件，不安装 Weave 系列其它插件也可使用。
+**无依赖。** MS To Do Sync 是独立插件，不安装 Weave 系列其它插件也可使用。
 
 ### 插件文件夹名称？
 
-插件 ID：`microsoft-todo-sync` → `.obsidian/plugins/microsoft-todo-sync/`
+插件 ID：`ms-todo-sync` → `.obsidian/plugins/ms-todo-sync/`
 
 ## 反馈与支持
 
@@ -187,7 +187,7 @@ Microsoft Graph **不提供** To Do「我的一天」读写接口。可用命令
 
 ### Introduction
 
-If you want to **plan tasks in Obsidian and execute them in Microsoft To Do on your phone**, Microsoft To Do Sync is built for that workflow.
+If you want to **plan tasks in Obsidian and execute them in Microsoft To Do on your phone**, MS To Do Sync is built for that workflow.
 
 It fits people who keep task lists in Markdown but rely on To Do for reminders and mobile check-off; who only want **explicitly tagged** tasks synced—not an entire To Do account; who need notes and one level of sub-steps in To Do; and who want a tap in To Do to jump back to the exact task line in Obsidian with a short highlight.
 
@@ -228,7 +228,7 @@ flowchart LR
 
 ### A. Write in Obsidian, execute on your phone (most common)
 
-1. Open **Settings → Microsoft To Do Sync → Account** and sign in with your Microsoft account in the browser.
+1. Open **Settings → MS To Do Sync → Account** and sign in with your Microsoft account in the browser.
 2. Under **General → Sync scope**, confirm the sync tag (default `mtd-sync`) and main list name (default `Obsidian Sync`).
 3. Write a task, e.g. `- [ ] Review chapter 3 #mtd-sync 📅 2026-06-20`
 4. After save or leaving the note, the task appears in To Do; check it off on your phone and Obsidian updates to `- [x]` after the next pull.
@@ -280,7 +280,7 @@ In **Dedicated sync lists (sub-tag routes)**, map sub-tags to a To Do list and d
 
 ### Option 1: Community plugins (recommended)
 
-Once listed in the official directory, open **Settings → Community plugins → Browse** and search for **Microsoft To Do Sync**.
+Once listed in the official directory, open **Settings → Community plugins → Browse** and search for **MS To Do Sync**.
 
 ### Option 2: Manual installation
 
@@ -288,12 +288,12 @@ Once listed in the official directory, open **Settings → Community plugins →
    - `main.js`
    - `manifest.json`
    - `styles.css`
-2. Copy into `.obsidian/plugins/microsoft-todo-sync/`
-3. Restart Obsidian and enable **Microsoft To Do Sync** under **Settings → Community plugins**
+2. Copy into `.obsidian/plugins/ms-todo-sync/`
+3. Restart Obsidian and enable **MS To Do Sync** under **Settings → Community plugins**
 
 ## Quick start
 
-1. **Sign in**: Settings → **Microsoft To Do Sync** → **Account** → **Sign in**, complete Microsoft auth in the browser, return to Obsidian.
+1. **Sign in**: Settings → **MS To Do Sync** → **Account** → **Sign in**, complete Microsoft auth in the browser, return to Obsidian.
 2. **Confirm scope**: Set sync tag, main To Do list name, and default inbound note path under **General**.
 3. **Add a task**: Include `#mtd-sync` (or your tag) in a task line and save.
 4. **Check To Do**: Open Microsoft To Do on phone or desktop and look in your dedicated list.
@@ -337,11 +337,11 @@ Keep Obsidian open with the correct vault. If the link is invalid, use **Copy Ob
 
 ### Relation to Weave / EPUB Reader?
 
-**No dependency.** Microsoft To Do Sync is a standalone plugin.
+**No dependency.** MS To Do Sync is a standalone plugin.
 
 ### Plugin folder name?
 
-Plugin ID: `microsoft-todo-sync` → `.obsidian/plugins/microsoft-todo-sync/`
+Plugin ID: `ms-todo-sync` → `.obsidian/plugins/ms-todo-sync/`
 
 ## Feedback and support
 
