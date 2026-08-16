@@ -1,7 +1,7 @@
 {
   "id": "ms-todo-sync",
   "name": "MS To Do Sync",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "1.11.4",
   "description": "Sync tagged Markdown tasks with a dedicated Microsoft To Do list: notes, subtasks, reminders, and vault deep links.",
   "author": "Rabbit (zhuzhige)",

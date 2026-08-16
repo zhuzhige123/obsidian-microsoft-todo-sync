@@ -1,7 +1,7 @@
 {
   "name": "obsidian-microsoft-todo-sync",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Selective two-way sync between Obsidian tasks and Microsoft To Do.",
   "main": "main.js",
   "type": "module",
