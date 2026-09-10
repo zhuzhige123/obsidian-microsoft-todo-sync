@@ -28,6 +28,28 @@ describe("GraphClient", () => {
     expect(requestUrl).toHaveBeenCalledTimes(2);
   });
 
+  it("sends Prefer outlook.timezone so Graph returns local wall clock", async () => {
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      locale: "en-US",
+      calendar: "gregory",
+      numberingSystem: "latn",
+      timeZone: "Asia/Shanghai",
+    });
+    requestUrl.mockResolvedValue({ status: 200, text: '{"id":"task-1"}' });
+
+    const client = new GraphClient(auth as never);
+    await client.request("GET", "/me/todo/lists/x/tasks/y");
+
+    expect(requestUrl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Prefer: 'outlook.timezone="China Standard Time"',
+        }),
+      })
+    );
+    vi.restoreAllMocks();
+  });
+
   it("throws GraphApiError after retries are exhausted", async () => {
     vi.useFakeTimers();
     requestUrl.mockResolvedValue({ status: 503, text: "unavailable" });

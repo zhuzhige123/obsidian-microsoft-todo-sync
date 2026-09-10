@@ -1,5 +1,6 @@
 import { requestUrl } from "obsidian";
 import type { MsAuthService } from "../auth/ms-auth-service";
+import { getOutlookTimezonePreferHeader } from "../utils/timezone";
 
 const MAX_RETRIES = 3;
 const RETRY_STATUSES = new Set([429, 503]);
@@ -74,6 +75,7 @@ export class GraphClient {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        Prefer: getOutlookTimezonePreferHeader(),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       throw: false,

@@ -1,6 +1,10 @@
 import { inlineFromGraphReminder, reminderIsoFromInline } from "../parse/task-datetime";
 import { sanitizeTaskDisplayText } from "../parse/task-text";
-import { getGraphTimeZone, normalizeGraphLocalDateTime } from "../utils/timezone";
+import {
+  fromGraphDateTimeTimeZone,
+  getGraphTimeZone,
+  normalizeGraphLocalDateTime,
+} from "../utils/timezone";
 import type { ParsedSyncTask } from "../types/sync";
 import type { GraphTodoTask } from "../types/graph";
 
@@ -144,19 +148,22 @@ export function graphTaskToObsidianPatch(
   doneDate?: string;
 } {
   const checkbox = checkboxFromGraphStatus(graphTask.status);
-  const dueDate = graphTask.dueDateTime?.dateTime?.slice(0, 10);
-  const startSlice = graphTask.startDateTime?.dateTime?.slice(0, 10);
+  const dueLocal = fromGraphDateTimeTimeZone(graphTask.dueDateTime);
+  const dueDate = dueLocal?.slice(0, 10);
+  const startLocal = fromGraphDateTimeTimeZone(graphTask.startDateTime);
+  const startSlice = startLocal?.slice(0, 10);
   const scheduledDate = options.scheduledMapsToStart ? startSlice : undefined;
   const startDate = options.scheduledMapsToStart ? undefined : startSlice;
   const reminderSource =
-    graphTask.isReminderOn && graphTask.reminderDateTime?.dateTime
-      ? graphTask.reminderDateTime.dateTime
+    graphTask.isReminderOn
+      ? fromGraphDateTimeTimeZone(graphTask.reminderDateTime)
       : undefined;
   const inline = inlineFromGraphReminder(dueDate, reminderSource);
-  const doneDate =
+  const doneLocal =
     graphTask.status === "completed"
-      ? graphTask.completedDateTime?.dateTime?.slice(0, 10)
+      ? fromGraphDateTimeTimeZone(graphTask.completedDateTime)
       : undefined;
+  const doneDate = doneLocal?.slice(0, 10);
   return {
     checkbox,
     title: sanitizeTaskDisplayText(graphTask.title?.trim() || "Untitled task"),
