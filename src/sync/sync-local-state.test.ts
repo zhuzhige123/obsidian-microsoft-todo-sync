@@ -4,7 +4,7 @@ import { SyncIndex } from "./sync-index";
 import {
   findUntaggedIndexEntries,
   localTaskModifiedMs,
-  removeUntaggedIndexEntriesForFile,
+  countUntaggedIndexEntriesForFile,
   touchLocalTaskModified,
 } from "./sync-local-state";
 import type { SyncIndexEntry } from "../types/sync";
@@ -43,13 +43,13 @@ describe("sync-local-state", () => {
     expect(localTaskModifiedMs(row, 999)).toBe(500);
   });
 
-  it("removes index rows when sync tag is stripped from a line", () => {
+  it("keeps index rows when sync tag is stripped (paused mapping)", () => {
     const index = SyncIndex.fromRecord({
       "mtd-a": entry({ mtdId: "mtd-a" }),
     });
-    const lines = ['- [ ] Task <!-- mtd:id=mtd-a -->'];
-    const removed = removeUntaggedIndexEntriesForFile(index, "note.md", lines, [], DEFAULT_SETTINGS);
-    expect(removed).toBe(1);
-    expect(index.getByMtdId("mtd-a")).toBeUndefined();
+    const lines = ["- [ ] Task <!-- mtd:id=mtd-a -->"];
+    const paused = countUntaggedIndexEntriesForFile(index, "note.md", lines, [], DEFAULT_SETTINGS);
+    expect(paused).toBe(1);
+    expect(index.getByMtdId("mtd-a")).toBeDefined();
   });
 });

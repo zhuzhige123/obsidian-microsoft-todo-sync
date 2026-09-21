@@ -40,13 +40,17 @@ export function highlightPreviewTaskElement(
 
 export function showRowHighlightBand(
   rect: DOMRect | DOMRectReadOnly | null | undefined,
-  durationMs = DEFAULT_DURATION_MS
+  durationMs = DEFAULT_DURATION_MS,
+  anchor?: Element
 ): boolean {
   if (!rect || (rect.width === 0 && rect.height === 0)) {
     return false;
   }
 
-  const band = window.document.body.createDiv({ cls: ROW_BAND_CLASS });
+  const doc = anchor?.ownerDocument ?? window.document;
+  const win = doc.defaultView ?? window;
+  clearExistingRowBands(doc);
+  const band = doc.body.createDiv({ cls: ROW_BAND_CLASS });
   band.setCssProps({
     top: `${rect.top}px`,
     left: `${rect.left}px`,
@@ -54,10 +58,16 @@ export function showRowHighlightBand(
     height: `${Math.max(rect.height, 20)}px`,
   });
 
-  window.setTimeout(() => {
+  win.setTimeout(() => {
     band.remove();
   }, durationMs);
   return true;
+}
+
+function clearExistingRowBands(doc: Document): void {
+  for (const existing of Array.from(doc.body.querySelectorAll(`.${ROW_BAND_CLASS}`))) {
+    existing.remove();
+  }
 }
 
 export function resolveTaskLineRect(

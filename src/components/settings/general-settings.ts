@@ -9,6 +9,7 @@ export function mountGeneralSettings(
   hosts: {
     interface: HTMLElement;
     scope: HTMLElement;
+    listRoutes: HTMLElement;
     autoSync: HTMLElement;
     remote: HTMLElement;
     links: HTMLElement;
@@ -78,7 +79,7 @@ export function mountGeneralSettings(
       );
     });
 
-  new Setting(hosts.scope)
+  new Setting(hosts.listRoutes)
     .setName(strings.sync.inboundRouteName)
     .setDesc(strings.sync.inboundRouteDesc);
 

@@ -1,5 +1,6 @@
 import type { ListRouteEntry, MtdPluginSettings } from "./types";
 import { SETTINGS_BOUNDS, clampInt } from "./settings-bounds";
+import { normalizeExcludedFolders } from "../vault/excluded-folders";
 
 export const DEFAULT_SETTINGS: MtdPluginSettings = {
   uiLanguage: "auto",
@@ -12,6 +13,7 @@ export const DEFAULT_SETTINGS: MtdPluginSettings = {
   todoListName: "Obsidian Sync",
   defaultInboundVaultPath: "Microsoft To Do/Inbox.md",
   listRoutes: [],
+  excludedFolders: [],
   deltaIntervalMinutes: 5,
   remoteDeletePolicy: "delete",
   appendBacklinkToTodo: true,
@@ -59,6 +61,7 @@ export function normalizeSettings(raw: Partial<MtdPluginSettings> | undefined): 
       String(raw?.defaultInboundVaultPath ?? DEFAULT_SETTINGS.defaultInboundVaultPath).trim() ||
       DEFAULT_SETTINGS.defaultInboundVaultPath,
     listRoutes: normalizeListRoutes(raw?.listRoutes),
+    excludedFolders: normalizeExcludedFolders(raw?.excludedFolders),
     deltaIntervalMinutes: clampInt(
       Number(raw?.deltaIntervalMinutes),
       SETTINGS_BOUNDS.deltaIntervalMinutes.min,

@@ -2,9 +2,14 @@ import type { ListItemCache } from "obsidian";
 import { isFenceLine } from "./note-block-parser";
 import { getQuoteDepth } from "./task-callout";
 import { parseMtdComment, stripMtdComment } from "./mtd-comment";
+import { stripHashTags } from "./tags";
 import { sanitizeTaskDisplayText } from "./task-text";
 import type { ParsedSubtask } from "../types/sync";
 import { parseTaskLine } from "./task-line-parser";
+
+function subtaskTitleFromBody(body: string): string {
+  return sanitizeTaskDisplayText(stripHashTags(stripMtdComment(body)).trim());
+}
 
 export function collectSubtasks(
   lines: string[],
@@ -23,15 +28,10 @@ export function collectSubtasks(
       continue;
     }
     const mtd = parseMtdComment(line);
-    const title = sanitizeTaskDisplayText(
-      stripMtdComment(parsed.body)
-        .replace(/#[\w/-]+/g, "")
-        .trim()
-    );
     result.push({
       line: child.position.start.line,
       rawLine: line,
-      title,
+      title: subtaskTitleFromBody(parsed.body),
       checked: child.task !== " ",
       mtd,
     });
@@ -64,19 +64,11 @@ export function collectSubtasksFromLines(
     if (parsed.indent <= parentIndent) {
       break;
     }
-    if (parsed.indent !== parentIndent + 2) {
-      continue;
-    }
     const mtd = parseMtdComment(line);
-    const title = sanitizeTaskDisplayText(
-      stripMtdComment(parsed.body)
-        .replace(/#[\w/-]+/g, "")
-        .trim()
-    );
     result.push({
       line: index,
       rawLine: line,
-      title,
+      title: subtaskTitleFromBody(parsed.body),
       checked: parsed.checkbox === "x" || parsed.checkbox === "X",
       mtd,
     });

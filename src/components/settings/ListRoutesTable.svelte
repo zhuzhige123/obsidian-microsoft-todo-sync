@@ -154,12 +154,7 @@
   }
 </script>
 
-<section class="mtd-routes-table-block" aria-labelledby="mtd-routes-table-title">
-  <header class="mtd-routes-table-header">
-    <h4 id="mtd-routes-table-title" class="mtd-routes-table-title">{strings.listRoutesName}</h4>
-    <p class="mtd-routes-table-desc">{strings.listRoutesDesc}</p>
-  </header>
-
+<section class="mtd-routes-table-block" aria-label={strings.listRoutesName}>
   <div class="mtd-routes-table-panel">
     <div class="mtd-routes-grid" role="table" aria-label={strings.listRoutesName}>
       <div class="mtd-routes-grid-row mtd-routes-grid-head" role="row">
@@ -239,10 +234,14 @@
           </div>
         {/each}
       {/if}
+
+      <div class="mtd-routes-grid-row mtd-routes-grid-footer" role="row">
+        <div class="mtd-routes-grid-cell mtd-routes-grid-cell--footer" role="cell">
+          <button type="button" class="mod-cta mtd-routes-table-add" onclick={addRow}>
+            {strings.listRoutesNew}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-
-  <button type="button" class="mod-cta mtd-routes-table-add" onclick={addRow}>
-    {strings.listRoutesNew}
-  </button>
 </section>

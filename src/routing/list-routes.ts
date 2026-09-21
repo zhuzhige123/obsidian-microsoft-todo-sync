@@ -7,6 +7,8 @@ export interface SyncScopeSettings {
   todoListName: string;
   defaultInboundVaultPath: string;
   listRoutes: ListRouteEntry[];
+  /** Vault folders skipped when scanning Markdown for sync tasks. */
+  excludedFolders?: string[];
 }
 
 export interface InboundRoute {

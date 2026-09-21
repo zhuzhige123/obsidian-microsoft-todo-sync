@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTaskLineBody } from "./task-line-body";
+import { formatTaskLineBody, taskLineBodyFromParsedTask } from "./task-line-body";
 
 describe("formatTaskLineBody", () => {
   it("includes due date, priority, and completion emoji", () => {
@@ -27,5 +27,29 @@ describe("formatTaskLineBody", () => {
     });
     expect(body).toContain("⏳ 2026-06-10");
     expect(body).toContain("🛫 2026-06-08");
+  });
+});
+
+describe("taskLineBodyFromParsedTask", () => {
+  it("preserves Unicode route tags on rewrite", () => {
+    const fields = taskLineBodyFromParsedTask(
+      {
+        filePath: "a.md",
+        line: 0,
+        rawLine: "- [ ] 任务 #msd/基础任务 <!-- mtd:id=mtd-1 -->",
+        checkbox: " ",
+        title: "任务",
+        priority: null,
+        mtd: { id: "mtd-1" },
+        noteBody: "",
+        subtasks: [],
+        taskIndent: 0,
+        quoteDepth: 0,
+        eligible: true,
+        targetListName: "基础任务",
+      },
+      "msd"
+    );
+    expect(fields.tags).toEqual(["#msd/基础任务"]);
   });
 });

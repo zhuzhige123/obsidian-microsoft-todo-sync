@@ -11,22 +11,54 @@ export interface TaskLocatePreviewQuery {
   titleHint?: string;
 }
 
+export interface LocateHostWindow {
+  document: Document;
+  innerWidth: number;
+  innerHeight: number;
+  setTimeout: typeof window.setTimeout;
+  clearTimeout: typeof window.clearTimeout;
+}
+
+function hostFromElement(element: Element): LocateHostWindow {
+  const doc = element.ownerDocument;
+  const win = doc.defaultView ?? window;
+  return {
+    document: doc,
+    innerWidth: win.innerWidth,
+    innerHeight: win.innerHeight,
+    setTimeout: win.setTimeout.bind(win),
+    clearTimeout: win.clearTimeout.bind(win),
+  };
+}
+
 export class TaskLocateOverlay {
   private overlayEl: HTMLElement | null = null;
   private timer: number | null = null;
+  private host: LocateHostWindow | null = null;
 
   showAtRect(
     rect: DOMRect | DOMRectReadOnly | null | undefined,
     label = "Located task",
-    durationMs = DEFAULT_DURATION_MS
+    durationMs = DEFAULT_DURATION_MS,
+    anchor?: Element
   ): boolean {
     if (!rect || (rect.width === 0 && rect.height === 0)) {
       return false;
     }
     this.clear();
 
-    const doc = window.document;
-    const overlay = doc.body.createDiv({ cls: OVERLAY_CLASS });
+    const host = anchor
+      ? hostFromElement(anchor)
+      : {
+          document: window.document,
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+          setTimeout: window.setTimeout.bind(window),
+          clearTimeout: window.clearTimeout.bind(window),
+        };
+    this.host = host;
+
+    const overlay = host.document.body.createDiv({ cls: OVERLAY_CLASS });
     overlay.classList.add(`${OVERLAY_CLASS}--measuring`);
     overlay.setCssProps({ top: "-9999px", left: "-9999px" });
 
@@ -39,12 +71,12 @@ export class TaskLocateOverlay {
     const top = clamp(
       rect.top + Math.min(12, Math.max(4, rect.height * 0.15)),
       12,
-      Math.max(12, window.innerHeight - overlayHeight - 12)
+      Math.max(12, host.innerHeight - overlayHeight - 12)
     );
     const left = clamp(
       rect.left + Math.min(16, Math.max(6, rect.width * 0.08)),
       12,
-      Math.max(12, window.innerWidth - overlayWidth - 12)
+      Math.max(12, host.innerWidth - overlayWidth - 12)
     );
 
     overlay.classList.remove(`${OVERLAY_CLASS}--measuring`);
@@ -54,17 +86,20 @@ export class TaskLocateOverlay {
     });
 
     this.overlayEl = overlay;
-    this.timer = window.setTimeout(() => this.clear(), durationMs);
+    this.timer = host.setTimeout(() => this.clear(), durationMs);
     return true;
   }
 
   clear(): void {
     if (this.timer !== null) {
-      window.clearTimeout(this.timer);
+      (this.host ?? {
+        clearTimeout: window.clearTimeout.bind(window),
+      }).clearTimeout(this.timer);
       this.timer = null;
     }
     this.overlayEl?.remove();
     this.overlayEl = null;
+    this.host = null;
   }
 }
 

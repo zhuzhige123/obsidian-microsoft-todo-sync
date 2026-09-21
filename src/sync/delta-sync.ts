@@ -1,5 +1,6 @@
 import { Notice } from "obsidian";
 import { formatString } from "../i18n";
+import { GraphApiError } from "../graph/graph-client";
 import { SyncIndex } from "./sync-index";
 import { normalizeSyncMeta, getDeltaLink, setDeltaLink } from "./sync-meta";
 import type { SyncMeta } from "../types/sync";
@@ -11,7 +12,6 @@ import {
   persistPluginDataWithMeta as savePluginIndexWithMeta,
 } from "./index-persistence";
 import type { SyncContext } from "./sync-context";
-import { removeUntaggedIndexEntriesInVault } from "./sync-local-state";
 import { InboundSync } from "./inbound-sync";
 
 export class DeltaSync {
@@ -58,8 +58,29 @@ export class DeltaSync {
         let deltaLink = getDeltaLink(syncMeta, listId);
         let hasMore = true;
         let pageFailed = false;
+        let restartedAfterGone = false;
+
         while (hasMore) {
-          const response = await this.ctx.todoApi.deltaTasks(listId, deltaLink);
+          let response;
+          try {
+            response = await this.ctx.todoApi.deltaTasks(listId, deltaLink);
+          } catch (error) {
+            // Graph returns 410 when a delta token is expired — clear and restart once.
+            if (
+              error instanceof GraphApiError &&
+              error.status === 410 &&
+              deltaLink &&
+              !restartedAfterGone
+            ) {
+              restartedAfterGone = true;
+              syncMeta = setDeltaLink(syncMeta, listId, undefined);
+              deltaLink = undefined;
+              await this.persistProgress(index, syncMeta);
+              continue;
+            }
+            throw error;
+          }
+
           for (const item of response.value ?? []) {
             try {
               let itemChanges = 0;
@@ -106,8 +127,6 @@ export class DeltaSync {
       this.reportDeltaFailure(error, options.silent);
       throw error;
     }
-
-    await removeUntaggedIndexEntriesInVault(this.ctx.host.app, index, settings);
 
     await savePluginIndexWithMeta(
       this.ctx.host.loadData,

@@ -23,6 +23,7 @@ export interface AuthChangeEvent {
 export class MsAuthService {
   private authState: AuthState | null = null;
   private pkceVerifier: string | null = null;
+  private refreshInFlight: Promise<string> | null = null;
 
   constructor(
     private readonly app: App,
@@ -60,8 +61,20 @@ export class MsAuthService {
   async logout(): Promise<void> {
     this.authState = null;
     this.pkceVerifier = null;
+    this.refreshInFlight = null;
     await clearRefreshToken(this.app);
     await this.onAuthChange({ auth: null });
+  }
+
+  /** Drop cached access token so the next getAccessToken() refreshes. */
+  invalidateAccessToken(): void {
+    if (this.authState) {
+      this.authState = {
+        ...this.authState,
+        accessToken: "",
+        expiresAt: 0,
+      };
+    }
   }
 
   async startBrowserLogin(): Promise<void> {
@@ -98,14 +111,7 @@ export class MsAuthService {
       code_verifier: this.pkceVerifier,
     });
 
-    const response = await requestUrl({
-      url: `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
-    });
-
-    const token = JSON.parse(response.text) as TokenResponse;
+    const token = await this.postToken(tenant, body);
     if (!token.access_token) {
       throw new Error(token.error_description ?? token.error ?? "Token exchange failed");
     }
@@ -134,6 +140,21 @@ export class MsAuthService {
       return this.authState.accessToken;
     }
 
+    if (this.refreshInFlight) {
+      return this.refreshInFlight;
+    }
+
+    this.refreshInFlight = this.refreshAccessToken().finally(() => {
+      this.refreshInFlight = null;
+    });
+    return this.refreshInFlight;
+  }
+
+  private async refreshAccessToken(): Promise<string> {
+    if (!this.authState?.refreshToken) {
+      throw new Error("Not signed in");
+    }
+
     const clientId = this.resolveClientId();
     const tenant = this.getTenant() || "common";
     const body = new URLSearchParams({
@@ -143,16 +164,22 @@ export class MsAuthService {
       scope: GRAPH_SCOPE_STRING,
     });
 
-    const response = await requestUrl({
-      url: `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
-    });
+    let token: TokenResponse;
+    try {
+      token = await this.postToken(tenant, body);
+    } catch (error) {
+      if (this.isInvalidGrant(error)) {
+        await this.logout();
+      }
+      throw error;
+    }
 
-    const token = JSON.parse(response.text) as TokenResponse;
     if (!token.access_token) {
-      throw new Error(token.error_description ?? token.error ?? "Token refresh failed");
+      const message = token.error_description ?? token.error ?? "Token refresh failed";
+      if (token.error === "invalid_grant") {
+        await this.logout();
+      }
+      throw new Error(message);
     }
 
     const refreshToken = token.refresh_token ?? this.authState.refreshToken;
@@ -170,8 +197,45 @@ export class MsAuthService {
     return this.authState.accessToken;
   }
 
+  private async postToken(tenant: string, body: URLSearchParams): Promise<TokenResponse> {
+    const response = await requestUrl({
+      url: `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+      throw: false,
+    });
+
+    let parsed: TokenResponse = {};
+    try {
+      parsed = JSON.parse(response.text) as TokenResponse;
+    } catch {
+      parsed = {};
+    }
+
+    if (response.status >= 400) {
+      const message =
+        parsed.error_description ?? parsed.error ?? `Token request failed (${response.status})`;
+      const error = new Error(message) as Error & { oauthError?: string };
+      error.oauthError = parsed.error;
+      throw error;
+    }
+
+    return parsed;
+  }
+
+  private isInvalidGrant(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+    const oauthError = (error as Error & { oauthError?: string }).oauthError;
+    if (oauthError === "invalid_grant") {
+      return true;
+    }
+    return /invalid_grant/i.test(error.message);
+  }
+
   private resolveClientId(): string {
     return this.getClientId().trim() || DEFAULT_OAUTH_CLIENT_ID;
   }
-
 }

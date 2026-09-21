@@ -60,7 +60,8 @@ export function toGraphReminder(reminder?: string): {
 function compactPayload(payload: Record<string, unknown>): Record<string, unknown> {
   const compact: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(payload)) {
-    if (value !== undefined && value !== null) {
+    // Keep explicit nulls — Graph uses null to clear dueDateTime / startDateTime.
+    if (value !== undefined) {
       compact[key] = value;
     }
   }
@@ -105,16 +106,22 @@ export function buildGraphTaskPayload(
   const dueDateTime = toGraphDueDate(due);
   if (dueDateTime) {
     payload.dueDateTime = dueDateTime;
+  } else if (!task.mtd.myday) {
+    payload.dueDateTime = null;
   }
 
   if (reminder.isReminderOn && reminder.reminderDateTime) {
     payload.reminderDateTime = reminder.reminderDateTime;
+  } else {
+    payload.isReminderOn = false;
   }
 
   const scheduled = options.scheduledMapsToStart ? task.scheduledDate : undefined;
   const startDateTime = toGraphDueDate(scheduled);
   if (startDateTime) {
     payload.startDateTime = startDateTime;
+  } else if (options.scheduledMapsToStart) {
+    payload.startDateTime = null;
   }
 
   return compactPayload(payload);
@@ -122,14 +129,14 @@ export function buildGraphTaskPayload(
 
 function priorityFromGraphImportance(
   importance?: string
-): ParsedSyncTask["priority"] | undefined {
+): ParsedSyncTask["priority"] {
   if (importance === "high") {
     return "high";
   }
   if (importance === "low") {
     return "low";
   }
-  return undefined;
+  return null;
 }
 
 export function graphTaskToObsidianPatch(
@@ -144,7 +151,7 @@ export function graphTaskToObsidianPatch(
   reminderTime?: string;
   scheduledDate?: string;
   startDate?: string;
-  priority?: ParsedSyncTask["priority"];
+  priority: ParsedSyncTask["priority"];
   doneDate?: string;
 } {
   const checkbox = checkboxFromGraphStatus(graphTask.status);

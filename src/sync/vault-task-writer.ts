@@ -4,6 +4,7 @@ import { buildTaskLine, parseTaskLine } from "../parse/task-line-parser";
 import { formatFencedNoteBlock } from "../parse/note-block-parser";
 import { stripCalloutPrefix, withCalloutPrefix } from "../parse/task-callout";
 import { computeTaskBlockEnd } from "../parse/task-block";
+import { extractTags } from "../parse/tags";
 import { sanitizeTaskDisplayText } from "../parse/task-text";
 import type { ParsedSubtask, ParsedSyncTask } from "../types/sync";
 import { formatTaskLineBody, taskLineBodyFromParsedTask } from "./task-line-body";
@@ -52,10 +53,9 @@ export function applyGraphPatchToTaskLine(
   const mtdPart = line.match(/<!--\s*mtd:[^>]+-->/)?.[0] ?? "";
   let body = stripped.replace(/^(\s*)([-*+])\s+\[[ xX/-]\]\s+/, "").trim();
   if (patch.title) {
-    const tagMatch = body.match(/(#[\w/-]+)/);
-    const tags = body.match(/#[\w/-]+/g) ?? [];
+    const tags = extractTags(body).map((tag) => `#${tag}`);
     const priority = body.match(/(⏫|🔺|🔼|🔽|🔻)/g) ?? [];
-    const mergedTags = tags.length > 0 ? ` ${tags.join(" ")}` : tagMatch ? ` ${tagMatch[1]}` : "";
+    const mergedTags = tags.length > 0 ? ` ${tags.join(" ")}` : "";
     const mergedPriority = priority.length > 0 ? ` ${priority.join(" ")}` : "";
     body = `${patch.title.trim()}${mergedTags}${mergedPriority}`.trim();
   }
@@ -87,7 +87,11 @@ export function rebuildFileSection(
 
   const newBlock: string[] = [rebuildTaskLine({ ...task, noteBody }, syncTag)];
   for (const sub of subtasks) {
-    const indent = " ".repeat(task.taskIndent + 2);
+    const parsedSub = parseTaskLine(sub.rawLine);
+    const indentCount = parsedSub && parsedSub.indent > task.taskIndent
+      ? parsedSub.indent
+      : task.taskIndent + 2;
+    const indent = " ".repeat(indentCount);
     const check = sub.checked ? "x" : " ";
     const title = sanitizeTaskDisplayText(sub.title);
     const stepOnly = { step: sub.mtd.step };

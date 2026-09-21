@@ -183,4 +183,38 @@ describe("task-snapshot", () => {
     expect(remote.remoteFieldsDirty).toBe(true);
     expect(remote.remoteNoteDirty).toBe(false);
   });
+
+  it("does not treat body-only Graph edits as field conflicts", () => {
+    const entry: SyncIndexEntry = {
+      mtdId: "mtd-a",
+      vaultPath: "a.md",
+      lineHint: 0,
+      graphTaskId: "g1",
+      graphListId: "l1",
+      steps: {},
+      obsidianModified: 0,
+      graphModified: "2026-06-01T10:00:00Z",
+      graphBodyModified: "2026-06-01T10:00:00Z",
+      taskSnapshot: computeTaskSnapshot(baseTask({ title: "Task", noteBody: "old" })),
+    };
+    const remote = splitRemoteDirty(entry, {
+      id: "g1",
+      title: "Task",
+      status: "notStarted",
+      body: { content: "new note", contentType: "text" },
+      lastModifiedDateTime: "2026-06-01T12:00:00Z",
+      bodyLastModifiedDateTime: "2026-06-01T12:00:00Z",
+    });
+    expect(remote.remoteFieldsDirty).toBe(false);
+    expect(remote.remoteNoteDirty).toBe(true);
+
+    const local = splitLocalDirty(entry, baseTask({ title: "Local title", noteBody: "old" }));
+    const plan = decideTaskSyncPlan({
+      ...local,
+      ...remote,
+      localMs: 200,
+      remoteMs: 300,
+    });
+    expect(plan.action).toBe("push");
+  });
 });

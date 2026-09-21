@@ -27,6 +27,7 @@ export class TaskLocateNavigation {
   private readonly overlay = new TaskLocateOverlay();
   private readonly pendingTimers = new Set<number>();
   private disposed = false;
+  private locateEpoch = 0;
 
   constructor(
     private readonly app: App,
@@ -37,6 +38,7 @@ export class TaskLocateNavigation {
 
   dispose(): void {
     this.disposed = true;
+    this.locateEpoch += 1;
     for (const timerId of this.pendingTimers) {
       window.clearTimeout(timerId);
     }
@@ -162,6 +164,14 @@ export class TaskLocateNavigation {
     mtdId: string,
     overlayLabel: string
   ): boolean {
+    this.locateEpoch += 1;
+    const epoch = this.locateEpoch;
+    for (const timerId of this.pendingTimers) {
+      window.clearTimeout(timerId);
+    }
+    this.pendingTimers.clear();
+    this.overlay.clear();
+
     const editor = view.editor;
     const lineText = editor?.getLine(line) ?? "";
     const titleHint = parseTaskLine(lineText)?.title;
@@ -171,7 +181,7 @@ export class TaskLocateNavigation {
       this.scrollEditorToLine(editor, line, lineText);
     }
 
-    this.flashLocateWithRetry(view, query, overlayLabel, 0, false);
+    this.flashLocateWithRetry(view, query, overlayLabel, 0, false, epoch);
     return true;
   }
 
@@ -212,15 +222,16 @@ export class TaskLocateNavigation {
     query: { mtdId: string; line: number; titleHint?: string },
     overlayLabel: string,
     attempt: number,
-    cmHighlighted: boolean
+    cmHighlighted: boolean,
+    epoch: number
   ): void {
-    if (this.disposed) {
+    if (this.disposed || epoch !== this.locateEpoch) {
       return;
     }
     const delay = attempt === 0 ? LOCATE_INITIAL_DELAY_MS : LOCATE_RETRY_DELAY_MS;
     const timerId = window.setTimeout(() => {
       this.pendingTimers.delete(timerId);
-      if (this.disposed) {
+      if (this.disposed || epoch !== this.locateEpoch) {
         return;
       }
       const editor = view.editor;
@@ -232,8 +243,9 @@ export class TaskLocateNavigation {
 
       const rect = resolveTaskLineRect(view, query.line, query);
       if (rect) {
-        showRowHighlightBand(rect);
-        this.overlay.showAtRect(rect, overlayLabel);
+        const anchor = view.containerEl;
+        showRowHighlightBand(rect, undefined, anchor);
+        this.overlay.showAtRect(rect, overlayLabel, undefined, anchor);
 
         const element = findTaskElementInPreview(view.containerEl, query);
         if (element) {
@@ -248,7 +260,7 @@ export class TaskLocateNavigation {
       }
 
       if (attempt + 1 < LOCATE_MAX_ATTEMPTS) {
-        this.flashLocateWithRetry(view, query, overlayLabel, attempt + 1, cmDone);
+        this.flashLocateWithRetry(view, query, overlayLabel, attempt + 1, cmDone, epoch);
       }
     }, delay);
     this.pendingTimers.add(timerId);

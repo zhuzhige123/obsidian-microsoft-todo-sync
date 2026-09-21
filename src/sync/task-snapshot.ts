@@ -50,31 +50,17 @@ export function splitLocalDirty(
   return { localFieldsDirty, localNoteDirty };
 }
 
-export function splitRemoteDirty(
-  entry: SyncIndexEntry,
-  remoteTask: GraphTodoTask
-): { remoteFieldsDirty: boolean; remoteNoteDirty: boolean } {
-  let remoteFieldsDirty =
-    !!remoteTask.lastModifiedDateTime &&
-    remoteTask.lastModifiedDateTime !== entry.graphModified;
-  let remoteNoteDirty =
-    !!remoteTask.bodyLastModifiedDateTime &&
-    remoteTask.bodyLastModifiedDateTime !== entry.graphBodyModified;
-
-  const previous = parseSnapshot(entry.taskSnapshot);
-  if (previous) {
-    if (!remoteFieldsDirty && !remoteTask.lastModifiedDateTime) {
-      const previousFields = { ...previous, noteBody: null };
-      const remoteFields = remoteFieldSnapshot(remoteTask);
-      remoteFieldsDirty = JSON.stringify(previousFields) !== JSON.stringify(remoteFields);
-    }
-    if (!remoteNoteDirty && !remoteTask.bodyLastModifiedDateTime) {
-      const remoteNote = stripBacklinkFromBody(remoteTask.body?.content ?? "");
-      remoteNoteDirty = (previous.noteBody ?? "") !== remoteNote;
-    }
-  }
-
-  return { remoteFieldsDirty, remoteNoteDirty };
+function fieldKeysFromSnapshot(snapshot: Record<string, unknown>): Record<string, unknown> {
+  return {
+    checkbox: snapshot.checkbox ?? null,
+    title: snapshot.title ?? null,
+    dueDate: snapshot.dueDate ?? null,
+    dueTime: snapshot.dueTime ?? null,
+    reminderDate: snapshot.reminderDate ?? null,
+    reminderTime: snapshot.reminderTime ?? null,
+    scheduledDate: snapshot.scheduledDate ?? null,
+    priority: snapshot.priority ?? null,
+  };
 }
 
 function remoteFieldSnapshot(remoteTask: GraphTodoTask): Record<string, unknown> {
@@ -88,9 +74,57 @@ function remoteFieldSnapshot(remoteTask: GraphTodoTask): Record<string, unknown>
     reminderTime: patch.reminderTime ?? null,
     scheduledDate: patch.scheduledDate ?? null,
     priority: patch.priority ?? null,
-    noteBody: null,
-    subtasks: "",
   };
+}
+
+/**
+ * Detect remote field vs note dirtiness without conflating body edits into field conflicts.
+ * `lastModifiedDateTime` alone is not used for fields — body-only Graph edits bump it too.
+ */
+export function splitRemoteDirty(
+  entry: SyncIndexEntry,
+  remoteTask: GraphTodoTask
+): { remoteFieldsDirty: boolean; remoteNoteDirty: boolean } {
+  const previous = parseSnapshot(entry.taskSnapshot);
+
+  let remoteNoteDirty =
+    !!remoteTask.bodyLastModifiedDateTime &&
+    remoteTask.bodyLastModifiedDateTime !== entry.graphBodyModified;
+  if (previous) {
+    const remoteNote = stripBacklinkFromBody(remoteTask.body?.content ?? "");
+    const noteContentDirty = (previous.noteBody ?? "") !== remoteNote;
+    if (!remoteTask.bodyLastModifiedDateTime) {
+      remoteNoteDirty = noteContentDirty;
+    } else if (!remoteNoteDirty && noteContentDirty && !entry.graphBodyModified) {
+      remoteNoteDirty = true;
+    }
+  }
+
+  let remoteFieldsDirty = false;
+  if (previous) {
+    remoteFieldsDirty =
+      JSON.stringify(fieldKeysFromSnapshot(previous)) !==
+      JSON.stringify(remoteFieldSnapshot(remoteTask));
+  } else if (
+    remoteTask.lastModifiedDateTime &&
+    remoteTask.lastModifiedDateTime !== entry.graphModified
+  ) {
+    remoteFieldsDirty = true;
+  }
+
+  const lastModifiedAdvanced =
+    !!remoteTask.lastModifiedDateTime &&
+    remoteTask.lastModifiedDateTime !== entry.graphModified;
+  const bodyModifiedAdvanced =
+    !!remoteTask.bodyLastModifiedDateTime &&
+    remoteTask.bodyLastModifiedDateTime !== entry.graphBodyModified;
+
+  // Checklist-only (and similar) Graph changes bump lastModified without field/note payload diffs.
+  if (!remoteFieldsDirty && !remoteNoteDirty && lastModifiedAdvanced && !bodyModifiedAdvanced) {
+    remoteFieldsDirty = true;
+  }
+
+  return { remoteFieldsDirty, remoteNoteDirty };
 }
 
 export type SyncDirection = "skip" | "push" | "pull";

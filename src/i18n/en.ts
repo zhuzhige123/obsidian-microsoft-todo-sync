@@ -10,7 +10,13 @@ export const en: MtdStrings = {
     interface: "Interface",
     scope: {
       title: "Sync scope",
-      description: "Only tasks with the sync namespace tag (including sub-tags) are routed to managed Microsoft To Do lists.",
+      description:
+        "Only tasks with the sync namespace tag (including sub-tags) are routed to managed Microsoft To Do lists. Excluded folders are never scanned.",
+    },
+    listRoutes: {
+      title: "Dedicated sync lists (sub-tag routes)",
+      description:
+        "Each row is a two-way lane. Left: Obsidian tasks with this sub-tag push to the To Do list in the middle. Right: new tasks on that To Do list (without a page header in the note) land in this vault note by default. Save each row from the action menu.",
     },
     autoSync: {
       title: "Auto sync",
@@ -72,6 +78,17 @@ export const en: MtdStrings = {
     listRoutesErrorVault: "Enter the Obsidian vault path for inbound tasks",
     listRoutesErrorListConflict: "This To Do list already maps to a different Obsidian file",
     listRoutesVaultPlaceholder: "Microsoft To Do/Inbox.md",
+    excludedFoldersName: "Excluded folders",
+    excludedFoldersDesc:
+      "Markdown files in these folders are not scanned for sync tags. Use this for template libraries so sample tasks are never pushed to Microsoft To Do.",
+    excludedFoldersAdd: "Add",
+    excludedFoldersRemove: "Remove",
+    excludedFoldersEmpty: "No excluded folders yet.",
+    excludedFoldersPlaceholder: "Pick a folder, then click Add",
+    excludedFoldersErrorEmpty: "Enter a vault folder path",
+    excludedFoldersErrorDuplicate: "This folder is already excluded",
+    excludedFoldersErrorMissing: "That folder is not in this vault",
+    excludedFoldersErrorCovered: "Already covered by {folder}",
     intervalName: "Delta sync interval (minutes)",
     intervalDesc: "How often to pull changes from Microsoft To Do.",
     backlinkName: "Append Obsidian backlink in To Do notes",

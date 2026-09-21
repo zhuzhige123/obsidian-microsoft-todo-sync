@@ -6,6 +6,7 @@ import { extractNoteAfterSubtasks } from "./note-block-parser";
 import { collectSubtasks, collectSubtasksFromLines } from "./subtask-parser";
 import { parseMtdComment } from "./mtd-comment";
 import type { ParsedSyncTask } from "../types/sync";
+import { isVaultPathExcluded } from "../vault/excluded-folders";
 
 export { collectMtdIdsInLines, findTaskLineByMtdId } from "./mtd-index";
 export { findTaskInVault } from "../vault/mtd-locator";
@@ -127,8 +128,12 @@ export function scanFileForSyncTasks(
           todoListName: "Obsidian Sync",
           defaultInboundVaultPath: "Microsoft To Do/Inbox.md",
           listRoutes: [],
+          excludedFolders: [],
         }
       : scope;
+  if (isVaultPathExcluded(filePath, settings.excludedFolders ?? [])) {
+    return [];
+  }
   const byLine = new Map<number, ParsedSyncTask>();
   for (const task of scanFromListItems(filePath, lines, listItems, settings)) {
     byLine.set(task.line, task);

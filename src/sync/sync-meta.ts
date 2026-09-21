@@ -2,7 +2,7 @@ import type { SyncMeta } from "../types/sync";
 
 export function normalizeSyncMeta(meta: SyncMeta | undefined): SyncMeta {
   if (!meta) {
-    return { deltaLinks: {} };
+    return { deltaLinks: {}, ignoredGraphTaskIds: [] };
   }
 
   const deltaLinks = { ...(meta.deltaLinks ?? {}) };
@@ -14,7 +14,11 @@ export function normalizeSyncMeta(meta: SyncMeta | undefined): SyncMeta {
     deltaLinks[legacyListId] = legacyDeltaLink;
   }
 
-  return { deltaLinks };
+  const ignoredGraphTaskIds = Array.isArray(meta.ignoredGraphTaskIds)
+    ? [...new Set(meta.ignoredGraphTaskIds.filter((id): id is string => typeof id === "string" && id.length > 0))]
+    : [];
+
+  return { deltaLinks, ignoredGraphTaskIds };
 }
 
 export function getDeltaLink(meta: SyncMeta | undefined, listId: string): string | undefined {
@@ -30,5 +34,32 @@ export function setDeltaLink(meta: SyncMeta, listId: string, deltaLink: string |
   } else {
     delete deltaLinks[listId];
   }
-  return { deltaLinks };
+  return {
+    deltaLinks,
+    ignoredGraphTaskIds: normalized.ignoredGraphTaskIds ?? [],
+  };
+}
+
+export function isIgnoredGraphTaskId(meta: SyncMeta | undefined, graphTaskId: string): boolean {
+  const normalized = normalizeSyncMeta(meta);
+  return (normalized.ignoredGraphTaskIds ?? []).includes(graphTaskId);
+}
+
+export function addIgnoredGraphTaskId(meta: SyncMeta, graphTaskId: string): SyncMeta {
+  const normalized = normalizeSyncMeta(meta);
+  if (!graphTaskId || (normalized.ignoredGraphTaskIds ?? []).includes(graphTaskId)) {
+    return normalized;
+  }
+  return {
+    ...normalized,
+    ignoredGraphTaskIds: [...(normalized.ignoredGraphTaskIds ?? []), graphTaskId],
+  };
+}
+
+export function removeIgnoredGraphTaskId(meta: SyncMeta, graphTaskId: string): SyncMeta {
+  const normalized = normalizeSyncMeta(meta);
+  return {
+    ...normalized,
+    ignoredGraphTaskIds: (normalized.ignoredGraphTaskIds ?? []).filter((id) => id !== graphTaskId),
+  };
 }

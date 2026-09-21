@@ -52,6 +52,11 @@ export interface SyncIndexEntry {
 export interface SyncMeta {
   /** Per-list Microsoft Graph delta links (listId → deltaLink). */
   deltaLinks?: Record<string, string>;
+  /**
+   * Graph task IDs the user explicitly unlinked.
+   * Inbound must not recreate vault tasks for these until the remote task is deleted.
+   */
+  ignoredGraphTaskIds?: string[];
   /** @deprecated Migrated into deltaLinks on load. */
   deltaLink?: string;
   /** @deprecated Migrated into deltaLinks on load. */

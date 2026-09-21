@@ -10,6 +10,7 @@ vi.mock("obsidian", () => ({
 describe("GraphClient", () => {
   const auth = {
     getAccessToken: vi.fn(async () => "access-token"),
+    invalidateAccessToken: vi.fn(),
   };
 
   beforeEach(() => {

@@ -10,7 +10,13 @@ export const zh: MtdStrings = {
     interface: "界面",
     scope: {
       title: "同步范围",
-      description: "仅同步带命名空间标签（含子标签）的任务，并按路由进入对应 Microsoft To Do 列表。",
+      description:
+        "仅同步带命名空间标签（含子标签）的任务，并按路由进入对应 Microsoft To Do 列表。可排除模板等文件夹，避免被扫描。",
+    },
+    listRoutes: {
+      title: "专用同步列表（子标签路由）",
+      description:
+        "每一行是一条双向通道。左列：Obsidian 任务行带该子标签时，推送到中间的 To Do 列表。右列：在该 To Do 列表新建、且备注未写 page 定位时，默认写入的库内笔记。编辑后请在操作菜单中保存。",
     },
     autoSync: {
       title: "自动同步",
@@ -72,6 +78,17 @@ export const zh: MtdStrings = {
     listRoutesErrorVault: "请填写 Inbound 任务写入的 Obsidian 文件路径",
     listRoutesErrorListConflict: "该 To Do 列表已映射到其他 Obsidian 文件",
     listRoutesVaultPlaceholder: "Microsoft To Do/Inbox.md",
+    excludedFoldersName: "排除文件夹",
+    excludedFoldersDesc:
+      "这些文件夹下的 Markdown 不会被扫描同步标签。适合放任务模板，避免示例任务被推送到 Microsoft To Do。",
+    excludedFoldersAdd: "添加",
+    excludedFoldersRemove: "移除",
+    excludedFoldersEmpty: "暂无排除文件夹。",
+    excludedFoldersPlaceholder: "选择文件夹后点添加",
+    excludedFoldersErrorEmpty: "请填写库内文件夹路径",
+    excludedFoldersErrorDuplicate: "该文件夹已在排除列表中",
+    excludedFoldersErrorMissing: "库中没有这个文件夹",
+    excludedFoldersErrorCovered: "已被「{folder}」包含，无需再添加",
     intervalName: "增量同步间隔（分钟）",
     intervalDesc: "从 Microsoft To Do 拉取更改的频率。",
     backlinkName: "在 To Do 备注中附加 Obsidian 回链",

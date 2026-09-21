@@ -73,7 +73,7 @@
   padding: var(--mtd-settings-panel-padding);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--mtd-settings-radius-panel);
-  background: color-mix(in oklab, var(--background-primary), var(--background-secondary) 26%);
+  background: var(--background-primary);
 }
 
 .mtd-settings-group-header {
@@ -130,9 +130,9 @@
 }
 
 .mtd-native-settings-host :global(.setting-item) {
-  border: none;
+  border: 1px solid var(--background-modifier-border);
   border-radius: var(--mtd-settings-radius-row);
-  background: var(--background-secondary);
+  background: var(--background-secondary-alt, var(--background-secondary));
   padding: var(--mtd-settings-row-padding-y) var(--mtd-settings-row-padding-x);
 }
 
@@ -157,7 +157,7 @@
   flex-direction: column;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m, 12px);
-  background: var(--background-secondary);
+  background: var(--background-secondary-alt, var(--background-secondary));
   overflow: hidden;
 }
 
@@ -260,7 +260,7 @@
 .mtd-account-card {
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m, 10px);
-  background: var(--background-secondary);
+  background: var(--background-secondary-alt, var(--background-secondary));
   padding: 0.35rem 0.5rem;
 }
 
@@ -353,34 +353,13 @@
   flex-direction: column;
   gap: var(--mtd-settings-gap-md, 0.75rem);
   min-width: 0;
-  margin-top: 0.15rem;
-}
-
-.mtd-routes-table-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mtd-settings-gap-xs, 0.25rem);
-}
-
-.mtd-routes-table-title {
-  margin: 0;
-  font-size: var(--mtd-settings-font-size-label, var(--font-ui-small, 0.95rem));
-  font-weight: 600;
-  color: var(--text-normal);
-  line-height: 1.4;
-}
-
-.mtd-routes-table-desc {
-  margin: 0;
-  font-size: var(--mtd-settings-font-size-desc, var(--font-ui-smaller, 0.85rem));
-  color: var(--text-muted);
-  line-height: 1.55;
+  margin-top: var(--mtd-settings-gap-md, 0.75rem);
 }
 
 .mtd-routes-table-panel {
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--mtd-settings-radius-row, 14px);
-  background: var(--background-secondary);
+  background: var(--background-secondary-alt, var(--background-secondary));
   overflow: hidden;
   min-width: 0;
 }
@@ -406,7 +385,11 @@
 }
 
 .mtd-routes-grid-head {
-  background: color-mix(in oklab, var(--background-secondary), var(--background-modifier-hover) 40%);
+  background: color-mix(
+    in oklab,
+    var(--background-secondary-alt, var(--background-secondary)),
+    var(--background-modifier-hover) 35%
+  );
   padding-block: 0.55rem;
 }
 
@@ -422,7 +405,11 @@
 }
 
 .mtd-routes-grid-row--draft {
-  background: color-mix(in oklab, var(--background-secondary), var(--interactive-accent) 7%);
+  background: color-mix(
+    in oklab,
+    var(--background-secondary-alt, var(--background-secondary)),
+    var(--interactive-accent) 8%
+  );
 }
 
 .mtd-routes-grid-cell {
@@ -463,11 +450,98 @@
   text-align: center;
   font-size: var(--mtd-settings-font-size-desc, var(--font-ui-smaller, 0.85rem));
   color: var(--text-muted);
-  border-bottom: none;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.mtd-routes-grid-footer {
+  grid-template-columns: 1fr;
+  padding-block: 0.55rem;
+  background: color-mix(
+    in oklab,
+    var(--background-secondary-alt, var(--background-secondary)),
+    var(--background-modifier-hover) 18%
+  );
+}
+
+.mtd-routes-grid-cell--footer {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .mtd-routes-table-add {
-  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+.mtd-excluded-folders {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mtd-settings-gap-md, 0.75rem);
+  min-width: 0;
+}
+
+.mtd-excluded-folders-empty {
+  margin: 0;
+  font-size: var(--mtd-settings-font-size-desc, var(--font-ui-smaller, 0.85rem));
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.mtd-excluded-folders-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mtd-settings-gap-md, 0.75rem);
+  min-width: 0;
+}
+
+.mtd-excluded-folders-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.mtd-excluded-folders-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--mtd-settings-font-size-label, var(--font-ui-small, 0.95rem));
+  color: var(--text-normal);
+}
+
+.mtd-excluded-folders-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-s, 8px);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mtd-excluded-folders-remove:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.mtd-excluded-folders-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.mtd-excluded-folders-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.mtd-excluded-folders-add {
+  flex-shrink: 0;
 }
 
 @media (max-width: 640px) {
@@ -482,6 +556,15 @@
 
   .mtd-routes-grid-cell--actions {
     justify-content: flex-end;
+  }
+
+  .mtd-routes-grid-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .mtd-excluded-folders-add-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

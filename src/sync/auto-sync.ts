@@ -2,6 +2,7 @@ import { MarkdownView, TFile, type App, type Plugin, type WorkspaceLeaf } from "
 import { fileContainsSyncTag } from "../parse/file-task-scanner";
 import { hasSyncTag } from "../parse/task-line-parser";
 import type { MtdPluginSettings } from "../settings/types";
+import { isVaultPathExcluded } from "../vault/excluded-folders";
 
 export interface AutoSyncHost {
   app: App;
@@ -59,6 +60,10 @@ export class AutoSyncScheduler {
       return;
     }
 
+    if (isVaultPathExcluded(file.path, settings.excludedFolders)) {
+      return;
+    }
+
     if (this.host.isSyncing() || this.host.isPluginWrite(file.path)) {
       return;
     }
@@ -80,6 +85,9 @@ export class AutoSyncScheduler {
       return;
     }
     if (!(file instanceof TFile) || file.extension !== "md") {
+      return;
+    }
+    if (isVaultPathExcluded(file.path, settings.excludedFolders)) {
       return;
     }
     if (this.host.isSyncing() || this.host.isPluginWrite(file.path)) {

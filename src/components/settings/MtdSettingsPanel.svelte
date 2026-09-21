@@ -1,12 +1,14 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import TabNavigation from "../ui/TabNavigation.svelte";
   import LoginHelpModal from "./LoginHelpModal.svelte";
   import ListRoutesTable from "./ListRoutesTable.svelte";
+  import ExcludedFoldersList from "./ExcludedFoldersList.svelte";
   import { mountAccountSettings, mountAdvancedSettings } from "./account-settings";
   import { mountGeneralSettings } from "./general-settings";
   import { clearSettingsHosts, mountSettingsHosts } from "./native-settings-host";
   import { getStrings } from "../../i18n";
+  import { normalizeExcludedFolders } from "../../vault/excluded-folders";
   import type { UiLanguage } from "../../i18n";
   import type MicrosoftTodoSyncPlugin from "../../main";
 
@@ -28,8 +30,12 @@
   /** Bumps when plugin settings or auth state change so Svelte re-reads non-reactive plugin.settings. */
   let stateVersion = $state(0);
   let showLoginHelp = $state(false);
+  let excludedFolders = $state<string[]>(
+    untrack(() => normalizeExcludedFolders(plugin.settings.excludedFolders))
+  );
   let interfaceSettingsHost = $state<HTMLDivElement | null>(null);
   let scopeSettingsHost = $state<HTMLDivElement | null>(null);
+  let listRoutesSettingsHost = $state<HTMLDivElement | null>(null);
   let autoSyncSettingsHost = $state<HTMLDivElement | null>(null);
   let remoteSettingsHost = $state<HTMLDivElement | null>(null);
   let linksSettingsHost = $state<HTMLDivElement | null>(null);
@@ -122,6 +128,7 @@
       clearSettingsHosts(
         interfaceSettingsHost,
         scopeSettingsHost,
+        listRoutesSettingsHost,
         autoSyncSettingsHost,
         remoteSettingsHost,
         linksSettingsHost,
@@ -141,6 +148,7 @@
       activeTab !== "general"
       || !interfaceSettingsHost
       || !scopeSettingsHost
+      || !listRoutesSettingsHost
       || !autoSyncSettingsHost
       || !remoteSettingsHost
       || !linksSettingsHost
@@ -154,6 +162,7 @@
       [
         interfaceSettingsHost,
         scopeSettingsHost,
+        listRoutesSettingsHost,
         autoSyncSettingsHost,
         remoteSettingsHost,
         linksSettingsHost,
@@ -165,6 +174,7 @@
           {
             interface: interfaceSettingsHost!,
             scope: scopeSettingsHost!,
+            listRoutes: listRoutesSettingsHost!,
             autoSync: autoSyncSettingsHost!,
             remote: remoteSettingsHost!,
             links: linksSettingsHost!,
@@ -246,6 +256,16 @@
             <p class="mtd-settings-group-description">{strings.groups.scope.description}</p>
           </div>
           <div bind:this={scopeSettingsHost} class="mtd-native-settings-host"></div>
+        </div>
+
+        <div class="mtd-settings-group mtd-settings-group--panel">
+          <div class="mtd-settings-group-header">
+            <h3 class="mtd-settings-group-title with-accent-bar accent-cyan">
+              {strings.groups.listRoutes.title}
+            </h3>
+            <p class="mtd-settings-group-description">{strings.groups.listRoutes.description}</p>
+          </div>
+          <div bind:this={listRoutesSettingsHost} class="mtd-native-settings-host"></div>
           <ListRoutesTable
             syncTag={plugin.settings.syncTag}
             routes={plugin.settings.listRoutes}
@@ -255,6 +275,27 @@
               await save();
             }}
           />
+        </div>
+
+        <div class="mtd-settings-group mtd-settings-group--panel">
+          <div class="mtd-settings-group-header">
+            <h3 class="mtd-settings-group-title with-accent-bar accent-purple">
+              {strings.sync.excludedFoldersName}
+            </h3>
+            <p class="mtd-settings-group-description">{strings.sync.excludedFoldersDesc}</p>
+          </div>
+          <div class="mtd-native-settings-host">
+            <ExcludedFoldersList
+              plugin={plugin}
+              folders={excludedFolders}
+              strings={strings.sync}
+              onFoldersChange={async (next) => {
+                plugin.settings.excludedFolders = next;
+                excludedFolders = next;
+                await save();
+              }}
+            />
+          </div>
         </div>
 
         <div class="mtd-settings-group mtd-settings-group--panel">

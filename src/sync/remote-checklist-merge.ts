@@ -3,29 +3,42 @@ import type { ParsedSubtask, ParsedSyncTask } from "../types/sync";
 import { sanitizeTaskDisplayText } from "../parse/task-text";
 import { serializeMtdComment } from "../parse/mtd-comment";
 
+/**
+ * Merge remote checklist into local subtasks.
+ * Mapped local steps missing from Graph are dropped (To Do deleted the Step).
+ */
 export function mergeRemoteChecklistIntoSubtasks(
   task: ParsedSyncTask,
   checklist: GraphChecklistItem[],
   steps: Record<string, string>
 ): { subtasks: ParsedSubtask[]; steps: Record<string, string> } {
-  const mergedSteps = { ...steps };
-  const mappedGraphIds = new Set(Object.values(mergedSteps).filter(Boolean));
+  const remoteById = new Map(checklist.map((item) => [item.id, item]));
+  const mergedSteps: Record<string, string> = {};
+  const mappedGraphIds = new Set<string>();
 
-  const subtasks = task.subtasks.map((sub) => {
+  const subtasks: ParsedSubtask[] = [];
+  for (const sub of task.subtasks) {
     const stepId = sub.mtd.step ?? `step-${sub.line}`;
-    const graphStepId = mergedSteps[stepId];
-    const remote = graphStepId ? checklist.find((item) => item.id === graphStepId) : undefined;
-    if (!remote) {
-      return sub;
+    const graphStepId = steps[stepId];
+    if (graphStepId) {
+      const remote = remoteById.get(graphStepId);
+      if (!remote) {
+        // Remote Step deleted — drop local mapped subtask.
+        continue;
+      }
+      mergedSteps[stepId] = graphStepId;
+      mappedGraphIds.add(graphStepId);
+      subtasks.push({
+        ...sub,
+        title: remote.displayName,
+        checked: remote.isChecked,
+        mtd: { ...sub.mtd, step: stepId },
+      });
+      continue;
     }
-    mappedGraphIds.add(graphStepId);
-    return {
-      ...sub,
-      title: remote.displayName,
-      checked: remote.isChecked,
-      mtd: { ...sub.mtd, step: stepId },
-    };
-  });
+    // Unmapped local subtask — keep until outbound creates a Graph step.
+    subtasks.push(sub);
+  }
 
   for (const remote of checklist) {
     if (mappedGraphIds.has(remote.id)) {

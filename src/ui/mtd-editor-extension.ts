@@ -6,6 +6,7 @@ import { loadCmStateModule, loadCmViewModule } from "../editor/codemirror-loader
 import { createMtdSyncChipElement } from "./mtd-comment-chip";
 import { selectionTouchesRange } from "./mtd-comment-cursor";
 import { buildMtdChipActivateHandler } from "./mtd-chip-host";
+import { domInstanceOf } from "../utils/dom-instance-of";
 import {
   computeTaskBadgeHints,
   createTaskBadgesElement,
@@ -48,9 +49,17 @@ export function registerMtdCommentEditorExtension(plugin: Plugin): void {
       );
     }
 
-    toDOM(): HTMLElement {
-      const element = createTaskBadgesElement(window.document, this.hints);
-      return element ?? window.createSpan();
+    toDOM(view: InstanceType<typeof EditorView>): HTMLElement {
+      const doc = view.dom.ownerDocument;
+      const element = createTaskBadgesElement(doc, this.hints);
+      if (element) {
+        return element;
+      }
+      const win = doc.defaultView;
+      if (win && typeof win.createSpan === "function") {
+        return win.createSpan();
+      }
+      return window.createSpan();
     }
 
     ignoreEvent(): boolean {
@@ -75,20 +84,23 @@ export function registerMtdCommentEditorExtension(plugin: Plugin): void {
       );
     }
 
-    toDOM(): HTMLElement {
+    toDOM(view: InstanceType<typeof EditorView>): HTMLElement {
       const mtd = parseMtdComment(this.raw);
       const chips = getStrings(mtdPlugin.settings.uiLanguage).chips;
       const onActivate =
         mtd.id && this.filePath
           ? buildMtdChipActivateHandler(mtdPlugin, this.filePath, this.line, mtd.id)
           : undefined;
-      return createMtdSyncChipElement(mtd, chips, { onActivate });
+      return createMtdSyncChipElement(mtd, chips, {
+        onActivate,
+        doc: view.dom.ownerDocument,
+      });
     }
 
     ignoreEvent(event: Event): boolean {
       const target = event.target;
       if (
-        target instanceof HTMLElement &&
+        domInstanceOf(target, HTMLElement) &&
         target.closest(".mtd-sync-chip--interactive")
       ) {
         return false;

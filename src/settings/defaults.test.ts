@@ -34,4 +34,12 @@ describe("normalizeSettings", () => {
       normalizeSettings({ createLinkedResource: null as unknown as boolean }).createLinkedResource
     ).toBe(true);
   });
+
+  it("normalizes excluded folders", () => {
+    expect(
+      normalizeSettings({
+        excludedFolders: [" Templates/ ", "templates", "", "Archive"] as unknown as string[],
+      }).excludedFolders
+    ).toEqual(["Templates", "Archive"]);
+  });
 });

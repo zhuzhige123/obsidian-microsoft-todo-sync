@@ -54,7 +54,10 @@ export default class MicrosoftTodoSyncPlugin extends Plugin {
       }
     );
     const migrated = await this.auth.hydrateFromStorage(legacyAuth);
-    if (migrated) {
+    const rawHasAuth = typeof rawData === "object" && rawData !== null && "auth" in rawData;
+    // Always rewrite when data.json still carries legacy auth, even if secretStorage
+    // already held the token (hydrate would report migrated=false).
+    if (migrated || rawHasAuth) {
       await this.saveAllData(this.pluginData);
     }
 

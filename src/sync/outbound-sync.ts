@@ -8,7 +8,7 @@ import {
 } from "../parse/file-task-scanner";
 import { generateMtdId, parseMtdComment, sanitizeGraphId, upsertMtdComment } from "../parse/mtd-comment";
 import type { MtdPluginSettings } from "../settings/types";
-import type { MtdPluginData, ParsedSyncTask } from "../types/sync";
+import type { MtdPluginData, ParsedSyncTask, SyncIndexEntry } from "../types/sync";
 import { SyncIndex } from "./sync-index";
 import { getVaultUriIdentifier } from "../navigation/obsidian-uri";
 import { resolveNoteBodyOnPull,
@@ -31,10 +31,10 @@ import { applyRemoteTaskToLines } from "./remote-task-apply";
 import { graphIndexTimestamps } from "./graph-index-timestamps";
 import type { SyncContext } from "./sync-context";
 import {
-  removeUntaggedIndexEntriesForFile,
   localTaskModifiedMs,
   touchLocalTaskModified,
 } from "./sync-local-state";
+import { isVaultPathExcluded } from "../vault/excluded-folders";
 
 export class OutboundSync {
   constructor(
@@ -54,6 +54,9 @@ export class OutboundSync {
     }
 
     const settings = this.ctx.host.getSettings();
+    if (isVaultPathExcluded(file.path, settings.excludedFolders)) {
+      return 0;
+    }
     const content = options.content ?? (await this.ctx.host.app.vault.read(file));
     if (!fileContainsSyncTag(content, settings.syncTag)) {
       return 0;
@@ -68,16 +71,9 @@ export class OutboundSync {
     data.syncMeta = normalizeSyncMeta(data.syncMeta);
     const index = await this.ctx.getWorkingIndex();
     const mtdIdsInFile = collectMtdIdsInLines(lines);
-    const untaggedCount = removeUntaggedIndexEntriesForFile(
-      index,
-      file.path,
-      lines,
-      listItems,
-      settings
-    );
     const staleEntries = index.forFile(file.path).filter((entry) => !mtdIdsInFile.has(entry.mtdId));
 
-    if (tasks.length === 0 && staleEntries.length === 0 && untaggedCount === 0) {
+    if (tasks.length === 0 && staleEntries.length === 0) {
       return 0;
     }
 
@@ -85,6 +81,7 @@ export class OutboundSync {
     let changed = 0;
     let workingLines = [...lines];
     const processedMtdIds = new Set<string>();
+    const pendingIndexEntries: SyncIndexEntry[] = [];
 
     while (true) {
       const pendingTasks = scanFileForSyncTasks(
@@ -120,6 +117,9 @@ export class OutboundSync {
         if (result.action !== "skip") {
           changed += 1;
           workingLines = result.lines;
+          if (result.pendingEntry) {
+            pendingIndexEntries.push(result.pendingEntry);
+          }
         }
 
         if (taskMtdId) {
@@ -159,6 +159,9 @@ export class OutboundSync {
     if (changed > 0) {
       this.ctx.host.markPluginWrite?.(file.path);
       await this.ctx.host.app.vault.modify(file, workingLines.join("\n"));
+      for (const pending of pendingIndexEntries) {
+        index.upsert(pending);
+      }
     }
 
     await this.persistIndex(index, (pluginData) => {
@@ -177,6 +180,9 @@ export class OutboundSync {
       return false;
     }
     const settings = this.ctx.host.getSettings();
+    if (isVaultPathExcluded(file.path, settings.excludedFolders)) {
+      return false;
+    }
     const content = await this.ctx.host.app.vault.read(file);
     const lines = content.split("\n");
     const cache = this.ctx.host.app.metadataCache.getFileCache(file);
@@ -203,6 +209,9 @@ export class OutboundSync {
     }
     this.ctx.host.markPluginWrite?.(file.path);
     await this.ctx.host.app.vault.modify(file, result.lines.join("\n"));
+    if (result.pendingEntry) {
+      index.upsert(result.pendingEntry);
+    }
     await this.persistIndex(index);
     return true;
   }
@@ -215,7 +224,7 @@ export class OutboundSync {
     index: SyncIndex;
     settings: MtdPluginSettings;
     vaultIdentifier: string;
-  }): Promise<{ action: SyncDirection; lines: string[] }> {
+  }): Promise<{ action: SyncDirection; lines: string[]; pendingEntry?: SyncIndexEntry }> {
     const { task, file, listId, index, settings, vaultIdentifier } = options;
     let lines = options.lines;
     const mtdId = task.mtd.id;
@@ -269,7 +278,7 @@ export class OutboundSync {
       return { action: "skip", lines };
     }
     if (plan.action === "pull") {
-      lines = await applyRemoteTaskToLines(
+      const applied = await applyRemoteTaskToLines(
         this.ctx.todoApi,
         task,
         remoteTask,
@@ -277,13 +286,12 @@ export class OutboundSync {
         lines,
         file,
         settings,
-        index,
         {
           preserveLocalNote: plan.preserveLocalNote,
           checklist: remoteTask.checklistItems,
         }
       );
-      return { action: "pull", lines };
+      return { action: "pull", lines: applied.lines, pendingEntry: applied.entry };
     }
 
     const pushed = await this.pushTask({

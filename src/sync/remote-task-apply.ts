@@ -9,7 +9,6 @@ import { resolveNoteBodyOnPull } from "./backlink-writer";
 import { graphIndexTimestamps } from "./graph-index-timestamps";
 import { computeTaskSnapshot } from "./task-snapshot";
 import { rebuildFileSection } from "./vault-task-writer";
-import { SyncIndex } from "./sync-index";
 import { mergeRemoteChecklistIntoSubtasks } from "./remote-checklist-merge";
 
 export interface ApplyRemoteTaskOptions {
@@ -17,6 +16,15 @@ export interface ApplyRemoteTaskOptions {
   checklist?: GraphChecklistItem[];
 }
 
+export interface AppliedRemoteTask {
+  lines: string[];
+  entry: SyncIndexEntry;
+}
+
+/**
+ * Build vault lines + the index entry that should be committed *after* a successful vault.modify.
+ * Does not mutate the sync index — callers upsert only once the write succeeds.
+ */
 export async function applyRemoteTaskToLines(
   todoApi: TodoApi,
   task: ParsedSyncTask,
@@ -25,9 +33,8 @@ export async function applyRemoteTaskToLines(
   lines: string[],
   file: TFile,
   settings: MtdPluginSettings,
-  index: SyncIndex,
   options: ApplyRemoteTaskOptions = {}
-): Promise<string[]> {
+): Promise<AppliedRemoteTask> {
   const patch = graphTaskToObsidianPatch(remoteTask, { scheduledMapsToStart: true });
   const checklist = options.checklist
     ? options.checklist
@@ -37,7 +44,6 @@ export async function applyRemoteTaskToLines(
     checklist,
     entry.steps ?? {}
   );
-  entry.steps = steps;
 
   const noteBody = options.preserveLocalNote
     ? task.noteBody
@@ -49,18 +55,23 @@ export async function applyRemoteTaskToLines(
     checkbox: patch.checkbox as ParsedSyncTask["checkbox"],
     title: patch.title,
     noteBody,
-    priority: patch.priority ?? task.priority,
-    startDate: patch.startDate ?? task.startDate,
+    priority: patch.priority,
+    startDate: patch.startDate,
     doneDate: patch.doneDate ?? (patch.checkbox === "x" ? task.doneDate : undefined),
     mtd: { id: entry.mtdId, myday: task.mtd.myday },
+    subtasks,
   };
 
   const rebuilt = rebuildFileSection(lines, mergedTask, settings.syncTag, noteBody, subtasks);
 
-  Object.assign(entry, graphIndexTimestamps(remoteTask));
-  entry.lineHint = task.line;
-  entry.obsidianModified = file.stat.mtime;
-  entry.taskSnapshot = computeTaskSnapshot(mergedTask);
-  index.upsert(entry);
-  return rebuilt;
+  const nextEntry: SyncIndexEntry = {
+    ...entry,
+    steps,
+    lineHint: task.line,
+    obsidianModified: file.stat.mtime,
+    taskSnapshot: computeTaskSnapshot(mergedTask),
+    ...graphIndexTimestamps(remoteTask),
+  };
+
+  return { lines: rebuilt, entry: nextEntry };
 }

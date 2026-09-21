@@ -48,4 +48,34 @@ describe("mergeRemoteChecklistIntoSubtasks", () => {
     expect(merged.subtasks[1]?.title).toBe("Two");
     expect(merged.steps["step-2"]).toBe("graph-step-2");
   });
+
+  it("drops local subtasks whose mapped Graph steps were deleted", () => {
+    const merged = mergeRemoteChecklistIntoSubtasks(
+      task({
+        subtasks: [
+          {
+            line: 1,
+            rawLine: "- [ ] gone",
+            title: "gone",
+            checked: false,
+            mtd: { step: "step-1" },
+          },
+          {
+            line: 2,
+            rawLine: "- [ ] keep",
+            title: "keep",
+            checked: false,
+            mtd: { step: "step-2" },
+          },
+        ],
+      }),
+      [{ id: "graph-step-2", displayName: "keep", isChecked: false }],
+      { "step-1": "graph-step-1", "step-2": "graph-step-2" }
+    );
+
+    expect(merged.subtasks).toHaveLength(1);
+    expect(merged.subtasks[0]?.title).toBe("keep");
+    expect(merged.steps["step-1"]).toBeUndefined();
+    expect(merged.steps["step-2"]).toBe("graph-step-2");
+  });
 });

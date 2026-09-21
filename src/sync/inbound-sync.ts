@@ -35,7 +35,7 @@ import {
   splitRemoteDirty,
 } from "./task-snapshot";
 import { removeTaskBlockFromLines } from "./vault-task-writer";
-import { resolveIndexedVaultTask } from "./vault-task-resolver";
+import { lookupIndexedVaultTask } from "./vault-task-resolver";
 import { SyncIndex } from "./sync-index";
 import { getVaultUriIdentifier } from "../navigation/obsidian-uri";
 import type { SyncContext } from "./sync-context";
@@ -43,6 +43,11 @@ import {
   localTaskModifiedMs,
   touchLocalTaskModified,
 } from "./sync-local-state";
+import {
+  isIgnoredGraphTaskId,
+  normalizeSyncMeta,
+  removeIgnoredGraphTaskId,
+} from "./sync-meta";
 
 export class InboundSync {
   constructor(private readonly ctx: SyncContext) {}
@@ -55,6 +60,11 @@ export class InboundSync {
     settings: MtdPluginSettings,
     options: { silent?: boolean } = {}
   ): Promise<number> {
+    const data = await this.ctx.host.loadData();
+    if (isIgnoredGraphTaskId(data.syncMeta, graphTask.id)) {
+      return 0;
+    }
+
     if (!isInboundAllowedList(listName, settings)) {
       return 0;
     }
@@ -135,6 +145,12 @@ export class InboundSync {
         taskSnapshot,
       });
 
+      const pluginData = await this.ctx.host.loadData();
+      pluginData.syncMeta = removeIgnoredGraphTaskId(
+        normalizeSyncMeta(pluginData.syncMeta),
+        remoteTask.id
+      );
+
       const shouldUpdateTodoBody =
         settings.appendBacklinkToTodo ||
         (settings.stripInboundRouteHeader && routeHeader.hasRoute);
@@ -192,12 +208,16 @@ export class InboundSync {
       window.console.warn("Microsoft To Do sync: falling back to delta task payload", error);
     }
 
-    const resolved = await resolveIndexedVaultTask(this.ctx.host.app, entry, index, settings);
-    if (!resolved) {
+    const lookup = await lookupIndexedVaultTask(this.ctx.host.app, entry, index, settings);
+    if (lookup.status === "paused") {
+      // Sync tag removed: keep mapping, do not pull or recreate.
+      return 0;
+    }
+    if (lookup.status === "missing") {
       index.removeByGraphId(graphTask.id);
       return this.createInboundRemoteTask(graphTask, listId, listName, index, settings, options);
     }
-    const { file, lines, task, entry: resolvedEntry } = resolved;
+    const { file, lines, task, entry: resolvedEntry } = lookup.value;
 
     const { localFieldsDirty, localNoteDirty } = splitLocalDirty(resolvedEntry, task);
     const { remoteFieldsDirty, remoteNoteDirty } = splitRemoteDirty(resolvedEntry, remoteTask);
@@ -215,7 +235,7 @@ export class InboundSync {
       return 0;
     }
 
-    const rebuilt = await applyRemoteTaskToLines(
+    const applied = await applyRemoteTaskToLines(
       this.ctx.todoApi,
       task,
       remoteTask,
@@ -223,7 +243,6 @@ export class InboundSync {
       lines,
       file,
       settings,
-      index,
       {
         preserveLocalNote: plan.preserveLocalNote,
         checklist: remoteTask.checklistItems,
@@ -231,7 +250,8 @@ export class InboundSync {
     );
 
     this.ctx.host.markPluginWrite?.(file.path);
-    await this.ctx.host.app.vault.modify(file, rebuilt.join("\n"));
+    await this.ctx.host.app.vault.modify(file, applied.lines.join("\n"));
+    index.upsert(applied.entry);
     return 1;
   }
 
@@ -241,13 +261,23 @@ export class InboundSync {
     settings: MtdPluginSettings
   ): Promise<number> {
     const entry = index.getByGraphId(graphTaskId);
+    const clearIgnore = async (): Promise<void> => {
+      const pluginData = await this.ctx.host.loadData();
+      pluginData.syncMeta = removeIgnoredGraphTaskId(
+        normalizeSyncMeta(pluginData.syncMeta),
+        graphTaskId
+      );
+    };
+
     if (!entry) {
+      await clearIgnore();
       return 0;
     }
 
     const file = this.ctx.host.app.vault.getAbstractFileByPath(entry.vaultPath);
     if (!(file instanceof TFile)) {
       index.removeByGraphId(graphTaskId);
+      await clearIgnore();
       return 1;
     }
 
@@ -258,6 +288,7 @@ export class InboundSync {
     const task = tasks.find((t) => t.mtd.id === entry.mtdId || t.mtd.graph === graphTaskId);
     if (!task) {
       index.removeByGraphId(graphTaskId);
+      await clearIgnore();
       return 0;
     }
 
@@ -267,6 +298,7 @@ export class InboundSync {
       this.ctx.host.markPluginWrite?.(file.path);
       await this.ctx.host.app.vault.modify(file, lines.join("\n"));
       index.removeByGraphId(graphTaskId);
+      await clearIgnore();
       return 1;
     }
 
@@ -276,6 +308,7 @@ export class InboundSync {
       this.ctx.host.markPluginWrite?.(file.path);
       await this.ctx.host.app.vault.modify(file, lines.join("\n"));
       index.removeByGraphId(graphTaskId);
+      await clearIgnore();
       return 1;
     }
 
@@ -283,6 +316,7 @@ export class InboundSync {
     this.ctx.host.markPluginWrite?.(file.path);
     await this.ctx.host.app.vault.modify(file, newLines.join("\n"));
     index.removeByGraphId(graphTaskId);
+    await clearIgnore();
     return 1;
   }
 }

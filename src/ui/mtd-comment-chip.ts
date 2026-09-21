@@ -19,12 +19,21 @@ export function mtdChipIcon(mtd: MtdComment): IconName {
   return "cloud";
 }
 
+function createSpanInDocument(doc: Document, cls: string): HTMLSpanElement {
+  const view = doc.defaultView;
+  if (view && typeof view.createSpan === "function") {
+    return view.createSpan({ cls });
+  }
+  return window.createSpan({ cls });
+}
+
 export function createMtdSyncChipElement(
   mtd: MtdComment,
   chips: MtdStrings["chips"],
-  options?: { onActivate?: (event: MouseEvent) => void }
+  options?: { onActivate?: (event: MouseEvent) => void; doc?: Document }
 ): HTMLElement {
-  const span = window.createSpan({ cls: "mtd-sync-chip" });
+  const doc = options?.doc ?? window.document;
+  const span = createSpanInDocument(doc, "mtd-sync-chip");
   if (mtd.step && !mtd.id) {
     span.classList.add("mtd-sync-chip--step");
   }

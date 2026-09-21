@@ -1,4 +1,5 @@
 import { formatDueSegment, formatReminderSegment } from "../parse/task-datetime";
+import { extractTags } from "../parse/tags";
 import { sanitizeTaskDisplayText } from "../parse/task-text";
 import type { ParsedSyncTask } from "../types/sync";
 
@@ -59,7 +60,8 @@ export function formatTaskLineBody(fields: TaskLineBodyFields): string {
 
 export function taskLineBodyFromParsedTask(task: ParsedSyncTask, syncTag: string): TaskLineBodyFields {
   const defaultTag = syncTag.startsWith("#") ? syncTag : `#${syncTag}`;
-  const existingTags = task.rawLine.replace(/<!--\s*mtd:[^>]+-->/g, "").match(/#[\w/-]+/g) ?? [];
+  const withoutComment = task.rawLine.replace(/<!--\s*mtd:[^>]+-->/g, "");
+  const existingTags = extractTags(withoutComment).map((tag) => `#${tag}`);
   const tags = existingTags.length > 0 ? existingTags : [defaultTag];
   return {
     title: task.title,

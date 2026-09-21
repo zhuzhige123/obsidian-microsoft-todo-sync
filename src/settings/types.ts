@@ -26,6 +26,11 @@ export interface MtdPluginSettings {
   /** Default vault file when To Do tasks arrive on the default list */
   defaultInboundVaultPath: string;
   listRoutes: ListRouteEntry[];
+  /**
+   * Vault-relative folder paths whose Markdown files are skipped when scanning
+   * for sync-eligible tasks (e.g. template libraries).
+   */
+  excludedFolders: string[];
   deltaIntervalMinutes: number;
   remoteDeletePolicy: RemoteDeletePolicy;
   appendBacklinkToTodo: boolean;

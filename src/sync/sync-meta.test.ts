@@ -10,6 +10,7 @@ describe("sync-meta", () => {
       })
     ).toEqual({
       deltaLinks: { "list-1": "https://delta" },
+      ignoredGraphTaskIds: [],
     });
   });
 

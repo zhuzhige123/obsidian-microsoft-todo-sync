@@ -3,6 +3,7 @@ import { TodoApi } from "../graph/todo-api";
 import { fileContainsSyncTag, scanFileForSyncTasks } from "../parse/file-task-scanner";
 import { parseMtdComment, upsertMtdComment } from "../parse/mtd-comment";
 import type { SyncIndexEntry } from "../types/sync";
+import { isVaultPathExcluded } from "../vault/excluded-folders";
 import { SyncIndex } from "./sync-index";
 import { SyncQueue } from "./sync-queue";
 import { DeltaSync } from "./delta-sync";
@@ -14,6 +15,7 @@ import {
 import { applyRemoteTaskToLines } from "./remote-task-apply";
 import { cleanupRemoteOnUnlink } from "./remote-unlink-cleanup";
 import type { SyncContext, SyncEngineHost } from "./sync-context";
+import { addIgnoredGraphTaskId, normalizeSyncMeta } from "./sync-meta";
 
 export type { SyncEngineHost } from "./sync-context";
 
@@ -107,6 +109,9 @@ export class SyncEngine {
     const files = this.ctx.host.app.vault.getMarkdownFiles();
     let changed = 0;
     for (const file of files) {
+      if (isVaultPathExcluded(file.path, settings.excludedFolders)) {
+        continue;
+      }
       const content = await this.ctx.host.app.vault.read(file);
       if (!fileContainsSyncTag(content, settings.syncTag)) {
         continue;
@@ -167,18 +172,18 @@ export class SyncEngine {
         }
 
         const remoteTask = await this.ctx.todoApi.getTask(entry.graphListId, entry.graphTaskId);
-        const rebuilt = await applyRemoteTaskToLines(
+        const applied = await applyRemoteTaskToLines(
           this.ctx.todoApi,
           task,
           remoteTask,
           entry,
           lines,
           file,
-          settings,
-          index
+          settings
         );
         this.ctx.host.markPluginWrite?.(file.path);
-        await this.ctx.host.app.vault.modify(file, rebuilt.join("\n"));
+        await this.ctx.host.app.vault.modify(file, applied.lines.join("\n"));
+        index.upsert(applied.entry);
         await savePluginIndex(this.ctx.host.loadData, this.ctx.host.saveData, index);
         return true;
       } catch (error) {
@@ -216,7 +221,14 @@ export class SyncEngine {
         if (entry) {
           index.removeByMtdId(mtd.id);
         }
-        await savePluginIndex(this.ctx.host.loadData, this.ctx.host.saveData, index);
+        await savePluginIndex(this.ctx.host.loadData, this.ctx.host.saveData, index, (data) => {
+          if (entry?.graphTaskId) {
+            data.syncMeta = addIgnoredGraphTaskId(
+              normalizeSyncMeta(data.syncMeta),
+              entry.graphTaskId
+            );
+          }
+        });
         return true;
       } catch (error) {
         window.console.error("Microsoft To Do sync: unlink task failed", error);

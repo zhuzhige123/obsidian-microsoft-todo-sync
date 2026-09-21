@@ -67,4 +67,17 @@ describe("file-task-scanner", () => {
     expect(tasks).toHaveLength(0);
     expect(collectMtdIdsInLines(lines)).toEqual(new Set(["mtd-old"]));
   });
+
+  it("skips files under excluded folders", () => {
+    const lines = ["- [ ] template task #mct"];
+    const scope = {
+      syncTag: "mct",
+      todoListName: "Obsidian Sync",
+      defaultInboundVaultPath: "Microsoft To Do/Inbox.md",
+      listRoutes: [],
+      excludedFolders: ["Templates"],
+    };
+    expect(scanFileForSyncTasks("Templates/demo.md", lines, [], scope)).toHaveLength(0);
+    expect(scanFileForSyncTasks("Notes/demo.md", lines, [], scope)).toHaveLength(1);
+  });
 });

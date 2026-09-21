@@ -14,6 +14,10 @@ export interface MtdStrings {
       title: string;
       description: string;
     };
+    listRoutes: {
+      title: string;
+      description: string;
+    };
     autoSync: {
       title: string;
       description: string;
@@ -70,6 +74,16 @@ export interface MtdStrings {
     listRoutesErrorVault: string;
     listRoutesErrorListConflict: string;
     listRoutesVaultPlaceholder: string;
+    excludedFoldersName: string;
+    excludedFoldersDesc: string;
+    excludedFoldersAdd: string;
+    excludedFoldersRemove: string;
+    excludedFoldersEmpty: string;
+    excludedFoldersPlaceholder: string;
+    excludedFoldersErrorEmpty: string;
+    excludedFoldersErrorDuplicate: string;
+    excludedFoldersErrorMissing: string;
+    excludedFoldersErrorCovered: string;
     intervalName: string;
     intervalDesc: string;
     backlinkName: string;
