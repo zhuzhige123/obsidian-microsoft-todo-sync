@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractFencedNoteBlock,
+  extractLegacyIndentedNote,
   extractNoteAfterSubtasks,
   formatFencedNoteBlock,
 } from "./note-block-parser";
@@ -49,5 +50,17 @@ describe("note-block-parser", () => {
       "> note line",
       "> ```",
     ]);
+  });
+
+  it("does not treat blank lines before non-note content as legacy note bounds", () => {
+    const lines = [
+      "- [ ] Task #mtd-sync",
+      "",
+      "",
+      "%% kanban:settings",
+    ];
+    const legacy = extractLegacyIndentedNote(lines, 1, 0);
+    expect(legacy.noteLines).toEqual([]);
+    expect(legacy.endIndex).toBe(1);
   });
 });

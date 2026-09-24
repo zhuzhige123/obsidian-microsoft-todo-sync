@@ -37,4 +37,38 @@ describe("task-block", () => {
     expect(bounds.noteBody).toBe("note");
     expect(bounds.blockEnd).toBe(6);
   });
+
+  it("does not claim blank lines before kanban settings footer", () => {
+    const lines = [
+      "- [ ] 控制论与科学方法论 📅 2026-09-24 #mtd-sync <!-- mtd:id=mtd-3a55c338 -->",
+      "",
+      "",
+      "",
+      "%% kanban:settings",
+      "```",
+      '{"kanban-plugin":"board"}',
+      "```",
+      "%%",
+    ];
+    expect(computeTaskBlockEnd(lines, 0, 0)).toBe(1);
+  });
+
+  it("does not claim blank lines between sibling tasks", () => {
+    const lines = ["- [ ] A #mtd-sync", "", "", "- [ ] B #mtd-sync"];
+    expect(computeTaskBlockEnd(lines, 0, 0)).toBe(1);
+  });
+
+  it("still allows blank lines between subtasks and fenced note", () => {
+    const lines = [
+      "- [ ] Parent #mtd-sync",
+      "  - [ ] Child",
+      "",
+      "```",
+      "note",
+      "```",
+    ];
+    const bounds = parseTaskBlockBounds(lines, 0, 0);
+    expect(bounds.noteBody).toBe("note");
+    expect(bounds.blockEnd).toBe(6);
+  });
 });

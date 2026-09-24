@@ -21,11 +21,16 @@ export function parseTaskBlockBounds(
 ): TaskBlockBounds {
   const parentQuoteDepth = getQuoteDepth(lines[taskLine] ?? "");
   let index = taskLine + 1;
+  /** Exclusive end of real block content — blank look-ahead must not extend this. */
+  let blockContentEnd = taskLine + 1;
   let sawSubtask = false;
 
   while (index < lines.length) {
     const line = lines[index] ?? "";
     if (line.trim() === "") {
+      // Peek through blanks for nested content; do not claim them as part of the block
+      // until a subtask/note actually follows (avoids swallowing gaps before siblings,
+      // headings, or plugin footers like `%% kanban:settings`).
       index += 1;
       continue;
     }
@@ -39,12 +44,13 @@ export function parseTaskBlockBounds(
     if (parsed && parsed.indent > taskIndent) {
       sawSubtask = true;
       index += 1;
+      blockContentEnd = index;
       continue;
     }
     break;
   }
 
-  const subtaskLineEnd = index;
+  const subtaskLineEnd = blockContentEnd;
   const fenced = extractFencedNoteBlock(lines, index);
   if (fenced.endIndex > index || fenced.noteBody) {
     return {

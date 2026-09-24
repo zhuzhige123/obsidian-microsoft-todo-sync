@@ -44,10 +44,13 @@ export function extractLegacyIndentedNote(
 ): { noteLines: string[]; endIndex: number } {
   const noteLines: string[] = [];
   let index = taskLineIndex;
+  /** Exclusive end of note content — blank look-ahead must not extend this. */
+  let contentEnd = taskLineIndex;
 
   while (index < lines.length) {
     const line = lines[index];
     if (line.trim() === "") {
+      // Peek only; trailing/inter-block blanks belong to the document, not the note.
       index += 1;
       continue;
     }
@@ -78,13 +81,14 @@ export function extractLegacyIndentedNote(
     if (lineIndent > taskIndent && !LIST_ITEM_RE.test(line)) {
       noteLines.push(line.trim());
       index += 1;
+      contentEnd = index;
       continue;
     }
 
     break;
   }
 
-  return { noteLines, endIndex: index };
+  return { noteLines, endIndex: contentEnd };
 }
 
 export function formatFencedNoteBlock(noteBody: string, quoteDepth = 0): string[] {

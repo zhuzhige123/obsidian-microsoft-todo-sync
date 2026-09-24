@@ -61,4 +61,37 @@ describe("vault-task-writer", () => {
     expect(rebuilt[1]).toContain("Child");
     expect(rebuilt.join("\n")).toContain("Synced note");
   });
+
+  it("preserves blank lines after a task block (e.g. before kanban settings)", () => {
+    const lines = [
+      "- [ ] 控制论与科学方法论 📅 2026-09-24 #mtd-sync <!-- mtd:id=abc123 -->",
+      "",
+      "",
+      "",
+      "%% kanban:settings",
+      "```",
+      '{"kanban-plugin":"board"}',
+      "```",
+      "%%",
+    ];
+    const task = baseTask({
+      line: 0,
+      title: "控制论与科学方法论",
+      rawLine: lines[0] ?? "",
+      dueDate: "2026-09-24",
+    });
+
+    const rebuilt = rebuildFileSection(lines, task, "mtd-sync", "", []);
+    expect(rebuilt).toEqual([
+      expect.stringContaining("控制论与科学方法论"),
+      "",
+      "",
+      "",
+      "%% kanban:settings",
+      "```",
+      '{"kanban-plugin":"board"}',
+      "```",
+      "%%",
+    ]);
+  });
 });
