@@ -2,6 +2,7 @@ import type { GraphChecklistItem } from "../types/graph";
 import type { ParsedSubtask, ParsedSyncTask } from "../types/sync";
 import { sanitizeTaskDisplayText } from "../parse/task-text";
 import { serializeMtdComment } from "../parse/mtd-comment";
+import { buildTaskLine } from "../parse/task-line-parser";
 
 /**
  * Merge remote checklist into local subtasks.
@@ -53,7 +54,12 @@ export function mergeRemoteChecklistIntoSubtasks(
     const mtd = serializeMtdComment({ step: stepId });
     subtasks.push({
       line: subtaskLine,
-      rawLine: `  - [${check}] ${title}${mtd ? ` ${mtd}` : ""}`,
+      rawLine: buildTaskLine({
+        indent: "  ",
+        checkbox: check,
+        body: title,
+        mtdComment: mtd || undefined,
+      }),
       title,
       checked: remote.isChecked,
       mtd: { step: stepId },

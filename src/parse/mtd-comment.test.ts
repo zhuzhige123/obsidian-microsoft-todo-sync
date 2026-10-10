@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   findMtdCommentMatchesInLine,
   parseMtdComment,
+  placeMtdComment,
   serializeMtdComment,
   stripMtdComment,
   upsertMtdComment,
@@ -22,6 +23,31 @@ describe("mtd-comment", () => {
     const serialized = serializeMtdComment({ id: "mtd-x", graph: "g2" });
     expect(serialized).toBe("<!-- mtd:id=mtd-x -->");
     expect(stripMtdComment(`line ${serialized}`)).toBe("line");
+  });
+
+  it("strips mid-line mtd comments without leaving double spaces", () => {
+    const line =
+      "- [ ] Fix sink #GTD/home <!-- mtd:id=mtd-x --> 🔽 🛫 2026-09-28";
+    expect(stripMtdComment(line)).toBe("- [ ] Fix sink #GTD/home 🔽 🛫 2026-09-28");
+  });
+
+  it("places mtd comment before Tasks emoji metadata", () => {
+    const placed = placeMtdComment(
+      "- [ ] Fix sink #GTD/home 🔽 🛫 2026-09-28",
+      "<!-- mtd:id=mtd-x -->"
+    );
+    expect(placed).toBe(
+      "- [ ] Fix sink #GTD/home <!-- mtd:id=mtd-x --> 🔽 🛫 2026-09-28"
+    );
+  });
+
+  it("upserts trailing legacy comments into Tasks-compatible position", () => {
+    const legacy =
+      "- [ ] Fix sink #GTD/home 🔽 🛫 2026-09-28 <!-- mtd:id=mtd-old -->";
+    const updated = upsertMtdComment(legacy, { id: "mtd-new" });
+    expect(updated).toBe(
+      "- [ ] Fix sink #GTD/home <!-- mtd:id=mtd-new --> 🔽 🛫 2026-09-28"
+    );
   });
 
   it("upserts and clears graph on unlink", () => {

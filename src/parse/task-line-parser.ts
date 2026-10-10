@@ -1,4 +1,4 @@
-import { parseMtdComment, stripMtdComment } from "./mtd-comment";
+import { parseMtdComment, placeMtdComment, stripMtdComment } from "./mtd-comment";
 import { stripHashTags } from "./sync-tag";
 import { stripCalloutPrefix } from "./task-callout";
 import { parseInlineTaskDateTime, stripInlineTaskDateTime } from "./task-datetime";
@@ -95,6 +95,9 @@ export function buildTaskLine(options: {
   body: string;
   mtdComment?: string;
 }): string {
-  const suffix = options.mtdComment ? ` ${options.mtdComment}` : "";
-  return `${options.indent}- [${options.checkbox}] ${options.body.trim()}${suffix}`;
+  const base = `${options.indent}- [${options.checkbox}] ${options.body.trim()}`;
+  if (!options.mtdComment) {
+    return base;
+  }
+  return placeMtdComment(base, options.mtdComment);
 }

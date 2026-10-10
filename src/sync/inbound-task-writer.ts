@@ -152,7 +152,14 @@ export function buildInboundTaskBlock(
     const check = item.isChecked ? "x" : " ";
     const stepMtd = serializeMtdComment({ step: stepId });
     const title = sanitizeTaskDisplayText(item.displayName?.trim() || "Step");
-    block.push(`  - [${check}] ${title}${stepMtd ? ` ${stepMtd}` : ""}`);
+    block.push(
+      buildTaskLine({
+        indent: "  ",
+        checkbox: check,
+        body: title,
+        mtdComment: stepMtd || undefined,
+      })
+    );
   });
 
   const resolvedNote =

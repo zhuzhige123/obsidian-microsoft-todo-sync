@@ -28,9 +28,9 @@
 
 - **选择性同步**：仅同步带命名空间标签（含子标签）的任务，或你手动「同步当前任务」后建立映射的行
 - **列表隔离**：只读写你配置的「Obsidian 主同步列表」及「专用同步列表」；其它 To Do 列表不会入站
-- **双向字段**：标题、完成状态、截止日期（`📅`）、开始日期（`⏳`）、优先级（`⏫` / `🔼` / `🔽`）、进行中（`- [/]`）
+- **双向字段**：标题、完成状态、截止日期（`📅`）、计划日期（`⏳` → To Do 开始日）、优先级（`⏫` / `🔼` / `🔽`）、进行中（`- [/]`）；亦解析 Tasks 的开始日期（`🛫`）
 - **备注与步骤**：任务下方缩进段落 → To Do 任务详情；一层缩进子 checkbox → To Do 步骤（Steps）
-- **提醒与今日**：行尾 `reminder=` 同步到 To Do 提醒；`myday` 标记用「今日截止 + 提醒」替代（Graph 不支持字面「我的一天」）
+- **提醒与今日**：注释内 `reminder=` 同步到 To Do 提醒；`myday` 标记用「今日截止 + 提醒」替代（Graph 不支持字面「我的一天」）
 - **入站捕获**：在已管理的 To Do 列表新建任务 → 自动写入库内默认笔记（如 `Microsoft To Do/Inbox.md`），并带上同步标签
 - **子标签路由**：`#mtd-sync/工作` → 专用 To Do 列表 A → 默认落盘笔记 A；多项目可各走各的列表与文件
 - **Obsidian 回链**：To Do 备注或关联项中可附加 `obsidian://mtd-sync?...`；点击后在 Obsidian 打开笔记并 **短暂高亮** 任务行
@@ -96,14 +96,15 @@ flowchart LR
 |-------------------|------------------|
 | `#mtd-sync`（或你改的标签名） | 准入同步；可用 `#标签/子标签` 走路由 |
 | `📅 2026-06-20` | 截止日期 |
-| `⏳ 2026-06-18` | 开始日期 |
+| `⏳ 2026-06-18` | 计划日期（Tasks scheduled）→ To Do 开始日 |
+| `🛫 2026-06-18` | 开始日期（Tasks start；解析支持） |
 | `⏫` `🔼` `🔽` | 高 / 中 / 低优先级 |
 | `- [/]` | 进行中 |
 | 任务下缩进段落 | 任务详情备注 |
 | 一层 `- [ ]` 子项 | 步骤（Steps） |
-| 行尾机器元数据注释 | 插件内部映射（阅读视图自动隐藏） |
+| 行内机器元数据注释 | 插件内部映射（阅读视图自动隐藏） |
 
-> **说明**：任务行尾会写入 `mtd:id=…` 等形式的 HTML 注释元数据以保持双向映射；阅读模式下不会显示，也不会用可见的 `🆔` 污染任务正文。
+> **说明**：插件在**标签之后、Tasks 日期/优先级 emoji 之前**写入 `<!-- mtd:id=… -->` 等 HTML 注释以保持双向映射（避免破坏 [Obsidian Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) 的行尾解析）；阅读模式下不会显示，也不会用可见的 `🆔` 污染任务正文。
 
 ## 安装
 
@@ -199,7 +200,7 @@ Minimum Obsidian version: **1.11.4**
 
 - **Selective sync**: Only tasks with your namespace tag (including sub-tags), or lines you explicitly sync via command
 - **List isolation**: Reads/writes only your main Obsidian sync list and configured dedicated lists—other To Do lists are ignored for inbound capture
-- **Two-way fields**: Title, completion, due date (`📅`), start date (`⏳`), priority (`⏫` / `🔼` / `🔽`), in-progress (`- [/]`)
+- **Two-way fields**: Title, completion, due date (`📅`), scheduled date (`⏳` → To Do start), priority (`⏫` / `🔼` / `🔽`), in-progress (`- [/]`); also parses Tasks start date (`🛫`)
 - **Notes and steps**: Indented paragraphs under a task → To Do body; one level of indented sub-checkboxes → To Do checklist steps
 - **Reminders and “today”**: `reminder=` in metadata syncs to To Do reminders; `myday` uses **due today + reminder** (Graph has no literal My Day API)
 - **Inbound capture**: New tasks in managed lists append to a default vault note (e.g. `Microsoft To Do/Inbox.md`) with the sync tag applied
@@ -267,14 +268,15 @@ In **Dedicated sync lists (sub-tag routes)**, map sub-tags to a To Do list and d
 |-------------|-------------------|
 | `#mtd-sync` (or your tag) | Eligible for sync; `#tag/subtag` for routing |
 | `📅 2026-06-20` | Due date |
-| `⏳ 2026-06-18` | Start date |
+| `⏳ 2026-06-18` | Scheduled (Tasks) → To Do start date |
+| `🛫 2026-06-18` | Start date (Tasks; parsed) |
 | `⏫` `🔼` `🔽` | High / normal / low importance |
 | `- [/]` | In progress |
 | Indented paragraphs under the task | Task body notes |
 | One level of `- [ ]` sub-items | Checklist steps |
-| Trailing machine metadata comment | Internal mapping (hidden in reading view) |
+| Inline machine metadata comment | Internal mapping (hidden in reading view) |
 
-> **Note**: The plugin stores mapping as an HTML comment with `mtd:id=…` (and related fields) at the end of the line. Reading view hides it—no visible `🆔` clutter in your task text.
+> **Note**: The plugin writes `<!-- mtd:id=… -->` **after tags and before Tasks date/priority emojis** so [Obsidian Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) can still parse metadata from the end of the line. Reading view hides the comment—no visible `🆔` clutter.
 
 ## Installation
 

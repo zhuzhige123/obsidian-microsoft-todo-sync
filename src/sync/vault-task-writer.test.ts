@@ -33,6 +33,20 @@ describe("vault-task-writer", () => {
     expect(patched).toContain("New title");
     expect(patched).toContain("mtd:id=abc123");
     expect(patched).toContain("📅 2026-06-10");
+    expect(patched).toMatch(/<!-- mtd:id=abc123 -->\s*📅/);
+    expect(patched).not.toMatch(/📅[\s\S]*<!-- mtd:/);
+  });
+
+  it("keeps mtd comment before Tasks emoji when rewriting dates", () => {
+    const line =
+      "- [ ] Fix sink #GTD/home 🔽 🛫 2026-09-28 <!-- mtd:id=mtd-xxxxxxxx -->";
+    const patched = applyGraphPatchToTaskLine(line, {
+      checkbox: " ",
+      scheduledDate: "2026-09-30",
+    });
+    expect(patched).toBe(
+      "- [ ] Fix sink #GTD/home <!-- mtd:id=mtd-xxxxxxxx --> 🔽 ⏳ 2026-09-30"
+    );
   });
 
   it("rebuilds task block with subtasks and note body", () => {

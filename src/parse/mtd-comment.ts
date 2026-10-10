@@ -73,7 +73,32 @@ export function parseMtdComment(line: string): MtdComment {
 }
 
 export function stripMtdComment(line: string): string {
-  return line.replace(MTD_COMMENT_RE, "").trimEnd();
+  return line
+    .replace(/\s*<!--\s*mtd:[\s\S]*?\s*-->\s*/, " ")
+    .replace(/\s{2,}/g, " ")
+    .trimEnd();
+}
+
+/**
+ * Tasks reads emoji metadata from the end of the line and stops at unknown tokens.
+ * Place the machine comment after description/tags and before Tasks emoji fields.
+ */
+const TASKS_META_START_RE = /(?:📅|⏰|⏳|🛫|✅|❌|🔁|⏫|🔺|🔼|🔽|🔻)/;
+
+export function placeMtdComment(lineWithoutComment: string, serialized: string): string {
+  if (!serialized) {
+    return lineWithoutComment;
+  }
+  const match = TASKS_META_START_RE.exec(lineWithoutComment);
+  if (!match || match.index === undefined) {
+    return `${lineWithoutComment.trimEnd()} ${serialized}`.trimEnd();
+  }
+  const before = lineWithoutComment.slice(0, match.index).trimEnd();
+  const after = lineWithoutComment.slice(match.index).trimStart();
+  if (!before) {
+    return `${serialized} ${after}`.trimEnd();
+  }
+  return `${before} ${serialized} ${after}`.trimEnd();
 }
 
 /** Vault line metadata — graph IDs stay in the plugin index, not in notes. */
@@ -103,7 +128,7 @@ export function upsertMtdComment(line: string, patch: Partial<MtdComment>): stri
   else if ("myday" in patch) delete merged.myday;
   const without = stripMtdComment(line);
   const serialized = serializeMtdComment(merged);
-  return serialized ? `${without} ${serialized}`.trimEnd() : without;
+  return serialized ? placeMtdComment(without, serialized) : without;
 }
 
 export function generateMtdId(): string {

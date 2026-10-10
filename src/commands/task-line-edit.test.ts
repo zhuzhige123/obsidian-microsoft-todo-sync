@@ -31,6 +31,8 @@ describe("task-line-edit", () => {
     expect(line).toContain("📅");
     expect(line).toContain("myday");
     expect(line).toContain("#mtd-sync");
+    expect(line).toMatch(/<!-- mtd:[\s\S]*?-->\s*📅/);
+    expect(line).not.toMatch(/📅[\s\S]*<!-- mtd:/);
   });
 
   it("parses reminder input formats", () => {
@@ -54,5 +56,7 @@ describe("task-line-edit", () => {
     });
     expect(line).toContain("⏰");
     expect(line).toContain("reminder=2026-06-12T14:00");
+    expect(line).toMatch(/<!-- mtd:[\s\S]*?-->\s*⏰/);
+    expect(line).not.toMatch(/⏰[\s\S]*<!-- mtd:/);
   });
 });

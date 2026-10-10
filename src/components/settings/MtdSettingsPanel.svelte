@@ -90,7 +90,7 @@
       },
       {
         label: strings.about.docs,
-        href: "https://github.com/zhuzhige123/obsidian-microsoft-todo-sync/tree/main/docs",
+        href: "https://obsidian-weave.xyz/#tutorials",
       },
       {
         label: strings.about.issues,

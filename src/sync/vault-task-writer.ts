@@ -1,4 +1,9 @@
-import { serializeMtdComment, stripMtdComment, upsertMtdComment } from "../parse/mtd-comment";
+import {
+  parseMtdComment,
+  placeMtdComment,
+  serializeMtdComment,
+  stripMtdComment,
+} from "../parse/mtd-comment";
 import { formatDueSegment, formatReminderSegment } from "../parse/task-datetime";
 import { buildTaskLine, parseTaskLine } from "../parse/task-line-parser";
 import { formatFencedNoteBlock } from "../parse/note-block-parser";
@@ -35,22 +40,20 @@ export function applyGraphPatchToTaskLine(
   }
 ): string {
   const { quoteDepth } = stripCalloutPrefix(rawLine);
-  let line = rawLine;
-  const parsed = parseTaskLine(line);
+  const parsed = parseTaskLine(rawLine);
   if (!parsed) {
     return rawLine;
   }
 
-  line = upsertMtdComment(line, {});
-
-  let stripped = stripMtdComment(line);
+  const existingMtd = parseMtdComment(rawLine);
+  let stripped = stripMtdComment(rawLine);
   stripped = stripped.replace(/📅\s*\d{4}-\d{2}-\d{2}(?:[ T]\d{1,2}:\d{2})?/g, "");
   stripped = stripped.replace(/⏰\s*(?:\d{4}-\d{2}-\d{2}(?:\s+\d{1,2}:\d{2})?|\d{1,2}:\d{2})/g, "");
   stripped = stripped.replace(/⏳\s*\d{4}-\d{2}-\d{2}/g, "");
+  stripped = stripped.replace(/🛫\s*\d{4}-\d{2}-\d{2}/g, "");
   stripped = stripped.replace(/✅\s*\d{4}-\d{2}-\d{2}/g, "");
   stripped = stripped.replace(/\s{2,}/g, " ").trimEnd();
 
-  const mtdPart = line.match(/<!--\s*mtd:[^>]+-->/)?.[0] ?? "";
   let body = stripped.replace(/^(\s*)([-*+])\s+\[[ xX/-]\]\s+/, "").trim();
   if (patch.title) {
     const tags = extractTags(body).map((tag) => `#${tag}`);
@@ -71,8 +74,10 @@ export function applyGraphPatchToTaskLine(
   if (patch.scheduledDate) body += ` ⏳ ${patch.scheduledDate}`;
 
   const indent = " ".repeat(parsed.indent);
-  const rebuilt = `${indent}- [${patch.checkbox}] ${body.trim()}${mtdPart ? ` ${mtdPart}` : ""}`;
-  return withCalloutPrefix(quoteDepth, rebuilt.trimEnd());
+  const rebuilt = `${indent}- [${patch.checkbox}] ${body.trim()}`;
+  const mtdSerialized = serializeMtdComment(existingMtd);
+  const withMtd = mtdSerialized ? placeMtdComment(rebuilt, mtdSerialized) : rebuilt;
+  return withCalloutPrefix(quoteDepth, withMtd.trimEnd());
 }
 
 export function rebuildFileSection(
@@ -96,7 +101,12 @@ export function rebuildFileSection(
     const title = sanitizeTaskDisplayText(sub.title);
     const stepOnly = { step: sub.mtd.step };
     const mtd = serializeMtdComment(stepOnly);
-    const subLine = `${indent}- [${check}] ${title}${mtd ? ` ${mtd}` : ""}`;
+    const subLine = buildTaskLine({
+      indent,
+      checkbox: check,
+      body: title,
+      mtdComment: mtd || undefined,
+    });
     newBlock.push(withCalloutPrefix(task.quoteDepth ?? 0, subLine));
   }
   if (noteBody.trim()) {
